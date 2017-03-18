@@ -98,7 +98,26 @@ void BFragmentationAnalyzer::beginJob(){ }
 void  BFragmentationAnalyzer::endRun(const edm::Run& iRun, const edm::EventSetup& iSetup){ }
 
 //
-void BFragmentationAnalyzer::endJob(){ }
+void BFragmentationAnalyzer::endJob()
+{ 
+  size_t nhadrons=hadronList_.size()+1;
+  histos_["semilepbr"] = fs->make<TH1F>("semilepbr", ";B-hadron;BR",nhadrons,0,nhadrons);
+  for(size_t i=0; i<nhadrons; i++)
+    {
+      std::string name("inc");
+      if(i) { char buf[20]; sprintf(buf,"%d", hadronList_[i-1]); name=buf; }
+      Float_t total=histos_["xb_"+name]->Integral(0,histos_["xb_"+name]->GetNbinsX()+1);
+      Float_t semilep=histos_["semilepbr"]->GetBinContent(i+1);
+      if(total>0)
+	{
+	  histos_["semilepbr"]->SetBinContent(i+1,semilep/total);
+	  histos_["semilepbr"]->SetBinError(i+1,histos_["semilepbr"]->GetBinError(i+1)/total);
+	}
+    }
+
+
+
+}
 
 //
 void BFragmentationAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
