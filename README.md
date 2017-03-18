@@ -23,3 +23,9 @@ with the b-fragmentation momentum transfer functions and the number of semi-lept
 in the simulation
 
 # Running the plugins
+The analyzer can be run on the output of the pseudo-top producer.
+The example below showers some Pohweg LHE events with Pythia8 setting a specific Bowler-Lund parameters.
+```
+cmsRun test/runBFragmentationAnalyzer_cfg.py rFactB=0.855 outputFile=xb_central.root
+```
+
