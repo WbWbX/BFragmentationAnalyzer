@@ -1,9 +1,11 @@
+
+
 #!/usr/bin/env python
 
 import os
 import ROOT
 
-maxEvents=2000
+maxEvents=-1
 cfg='${CMSSW_BASE}/src/TopQuarkAnalysis/BFragmentationAnalyzer/test/runBFragmentationAnalyzer_cfg.py'
 outf='${CMSSW_BASE}/src/TopQuarkAnalysis/BFragmentationAnalyzer/data/bfragweights.root'
 tune= [ ('up',1.079), ('central',0.8949), ('down',0.6981)]
