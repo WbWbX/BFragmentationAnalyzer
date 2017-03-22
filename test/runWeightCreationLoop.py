@@ -1,37 +1,22 @@
-
-
 #!/usr/bin/env python
 
 import os
-import ROOT
 
-maxEvents=-1
-cfg='${CMSSW_BASE}/src/TopQuarkAnalysis/BFragmentationAnalyzer/test/runBFragmentationAnalyzer_cfg.py'
-outf='${CMSSW_BASE}/src/TopQuarkAnalysis/BFragmentationAnalyzer/data/bfragweights.root'
-tune= [ ('up',1.079), ('central',0.8949), ('down',0.6981)]
+TUNES=[('Peterson','P',0.003271)]
+#TUNES=[ ('up','BL',1.079), ('central','BL',0.8949), ('cuetp8m2t4','BL',,0.855), ('down','BL',0.6981),('Peterson','P',0.003271)]
 
-#run the analyzer
-for tag,rFactB in tune:
-    os.system('cmsRun %s maxEvents=%d rFactB=%f outputFile=xb_%s.root'%(cfg,maxEvents,rFactB,tag))
+def main():
+    maxEvents=500000
+    cfg='${CMSSW_BASE}/src/TopQuarkAnalysis/BFragmentationAnalyzer/test/runBFragmentationAnalyzer_cfg.py'
+    outf='${CMSSW_BASE}/src/TopQuarkAnalysis/BFragmentationAnalyzer/data/bfragweights.root'
 
-#derive the weights
-xb={}
-for tag,_ in tune:
-    fIn=ROOT.TFile.Open('xb_%s_numEvent%d.root'%(tag,maxEvents))
-    xb[tag]=fIn.Get('bfragAnalysis/xb_inc').Clone(tag)
-    xb[tag].SetDirectory(0)
-    fIn.Close()
+    #run the analyzer
+    for tag,frag,param in TUNES:
+        os.system('cmsRun %s maxEvents=%d frag=%s param=%f outputFile=xb_%s.root'%(cfg,maxEvents,frag,param,tag))
 
-#save to file
-print 'Fragmentation weights have been saved in',outf
-fOut=ROOT.TFile.Open(outf,'RECREATE')
-for tag in ['up','down']:
-    xb[tag].Divide(xb['central'])
-    gr=ROOT.TGraph(xb[tag])
-    gr.SetName(tag+'gr')
-    gr.SetMarkerStyle(20)
-    gr.Write(tag+'gr')
-fOut.Close()
+if __name__ == "__main__":
+    main()
+
 
 
 

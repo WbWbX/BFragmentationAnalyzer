@@ -2,11 +2,16 @@ import FWCore.ParameterSet.Config as cms
 from FWCore.ParameterSet.VarParsing import VarParsing
 
 options = VarParsing ('python')
-options.register('rFactB', 
+options.register('frag', 
+		 'BL', 
+		 VarParsing.multiplicity.singleton,
+                 VarParsing.varType.string,
+		 "Fragmentation formula to use: BL (Bowler-Lund) P (Peterson)")
+options.register('param', 
 		 0.855, 
 		 VarParsing.multiplicity.singleton,
                  VarParsing.varType.float,
-		 "StringZ:rFactB")
+		 "StringZ:rFactB (BL) or StringZ:epsilonB (P)")
 options.parseArguments()
 
 process = cms.Process('GEN')
@@ -89,8 +94,7 @@ process.generator = cms.EDFilter("Pythia8HadronizerFilter",
                                                                                                'TimeShower:mMaxGamma = 1.0',
                                                                                                'TimeShower:renormMultFac   = 1',
                                                                                                'TimeShower:factorMultFac   = 1',
-                                                                                               'TimeShower:MEcorrections   = on',
-											       'StringZ:rFactB = %f'%options.rFactB
+                                                                                               'TimeShower:MEcorrections   = on'											      
                                                                                                ),
                                                               parameterSets = cms.vstring('pythia8CommonSettings',
                                                                                           'pythia8CUEP8M1Settings',
@@ -99,6 +103,12 @@ process.generator = cms.EDFilter("Pythia8HadronizerFilter",
                                                                                           )
                                                               )
                                  )
+
+if options.frag=='P':
+	process.generator.PythiaParameters.processParameters.append('StringZ:usePetersonB = on')     
+	process.generator.PythiaParameters.processParameters.append('StringZ:epsilonB = %f'%options.param)
+if options.frag=='BL':
+	process.generator.PythiaParameters.processParameters.append('StringZ:rFactB = %f'%options.param)
 
 #pseudo-top config
 from GeneratorInterface.RivetInterface.genParticles2HepMC_cfi import genParticles2HepMC
