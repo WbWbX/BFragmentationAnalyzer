@@ -64,7 +64,7 @@ def main():
         gr.SetMarkerStyle(20)
 
         sgr=smoothWeights(gr)
-        sgr.SetName(tag+'frag')
+        sgr.SetName(tag+'Frag')
         sgr.SetLineColor(ROOT.kBlue)
         sgr.Write()
 

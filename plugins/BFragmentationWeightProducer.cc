@@ -51,7 +51,7 @@ BFragmentationWeightProducer::BFragmentationWeightProducer(const edm::ParameterS
   for(size_t i=0; i<sizeof(weights)/sizeof(std::string); i++)
     {
       produces<edm::ValueMap<float> >(weights[i]);
-      TGraph *gr=(TGraph *)fIn->Get(weights[i].c_str());
+      TGraph *gr=(TGraph *)fIn->Get(weights[i].c_str());  
       if(gr==0) continue;
       wgtGr_[weights[i]]=gr;
     }
@@ -96,6 +96,7 @@ void BFragmentationWeightProducer::produce(edm::Event& iEvent, const edm::EventS
        jetWeights["semilepbrUp"].push_back(semilepbrUp);
        jetWeights["semilepbrDown"].push_back(semilepbrDown);
 
+       /*
        if(IS_BHADRON_PDGID(absBid))
 	 cout << genJet.pt()       << " GeV jet matched with " << absBid 
 	      << " upFrag: "       << wgtGr_["upFrag"]->Eval(jinfo.xb)
@@ -104,6 +105,7 @@ void BFragmentationWeightProducer::produce(edm::Event& iEvent, const edm::EventS
 	      << " PetersonFrag: " << wgtGr_["PetersonFrag"]->Eval(jinfo.xb)
 	      << " semilep+: "     << semilepbrUp 
 	      << " semilep-: "     << semilepbrDown << endl;
+       */
      }
 
    //put in event

@@ -12,11 +12,6 @@ options.parseArguments()
 
 process = cms.Process("Analysis")
 
-# global tag
-process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
-from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, '80X_mcRun2_asymptotic_2016_TrancheIV_v7')
-
 #message logger
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cerr.threshold = ''
@@ -34,17 +29,16 @@ process.source = cms.Source("PoolSource",
 # pseudo-top
 process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 process.mergedGenParticles = cms.EDProducer("MergedGenParticleProducer",
-                                            inputPruned = cms.InputTag("prunedGenParticles"),
-                                            inputPacked = cms.InputTag("packedGenParticles"),
-                                            )
-from GeneratorInterface.RivetInterface.genParticles2HepMC_cfi import genParticles2HepMC
-process.genParticles2HepMC = genParticles2HepMC.clone( genParticles = cms.InputTag("mergedGenParticles") )
+    inputPruned = cms.InputTag("prunedGenParticles"),
+    inputPacked = cms.InputTag("packedGenParticles"),
+)
+process.load('GeneratorInterface.RivetInterface.genParticles2HepMC_cfi')
+process.genParticles2HepMC.genParticles = cms.InputTag("mergedGenParticles")
+process.genParticles2HepMC.genEventInfo = cms.InputTag("generator")
 process.load("TopQuarkAnalysis.TopEventProducers.producers.pseudoTop_cfi")
-process.pseudoTop.leptonMinPt=cms.double(20)
-process.pseudoTop.leptonMaxEta=cms.double(2.5)
-process.pseudoTop.jetMaxEta=cms.double(5.0)
 
+# b-frag weight producer
 process.load('TopQuarkAnalysis.BFragmentationAnalyzer.bfragWgtProducer_cfi')
 
-process.p = cms.Path(process.pseudoTop*process.bfragWgtProducer)
+process.p = cms.Path(process.mergedGenParticles*process.genParticles2HepMC*process.pseudoTop*process.bfragWgtProducer)
 
