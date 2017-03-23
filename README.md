@@ -40,7 +40,47 @@ For the first case an example is provided below.
 
 ## Accessing the weights in a EDM analyzer
 
-TODO
+Step-by-step instructions to readout one of the weights in your analyzer.
+
+1. declare the tokens to access genJets and weights in your class
+```
+   edm::EDGetTokenT<std::vector<reco::GenJet>  > genJetsToken_;
+   edm::EDGetTokenT<edm::ValueMap<float> > petersonFragToken_;
+```
+2. in the constructor declare what the tokens consume
+```
+   genJetsToken_(consumes<std::vector<reco::GenJet> >(edm::InputTag("pseudoTop:jets"))),
+   petersonFragToken_(consumes<edm::ValueMap<float> >(edm::InputTag("bfragWgtProducer:PetersonFrag"))),
+```
+3. in the analyzer method get the genJets, the weights and loop over the jets to analyse them
+```
+  edm::Handle<std::vector<reco::GenJet> > genJets;
+  iEvent.getByToken(genJetsToken_,genJets);
+  edm::Handle<edm::ValueMap<float> > petersonFrag;
+  iEvent.getByToken(petersonFragToken_,petersonFrag);
+  for(auto genJet=genJets->begin(); genJet!=genJets->end(); ++genJet)
+    {
+        edm::Ref<std::vector<reco::GenJet> > genJetRef(genJets,genJet-genJets->begin());
+	cout << "pt=" << genJet->pt() << " id=" << genJet->pdgId() << " petersonFragWeight=" << (*petersonFrag)[genJetRef] << endl;
+	...
+    }
+```
+4. Add the pseudo-top and weight producer snippets to your cfg
+```
+    process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
+    process.mergedGenParticles = cms.EDProducer("MergedGenParticleProducer",
+						inputPruned = cms.InputTag("prunedGenParticles"),
+        					inputPacked = cms.InputTag("packedGenParticles"),
+    )
+    from GeneratorInterface.RivetInterface.genParticles2HepMC_cfi import genParticles2HepMC
+    process.genParticles2HepMC = genParticles2HepMC.clone( genParticles = cms.InputTag("mergedGenParticles") )
+    process.load("TopQuarkAnalysis.TopEventProducers.producers.pseudoTop_cfi")
+    process.load('TopQuarkAnalysis.BFragmentationAnalyzer.bfragWgtProducer_cfi')
+    ...
+    process.p = cms.Path(process.mergedGenParticles*process.genParticles2HepMC*process.pseudoTop*process.bfragWgtProducer*...)
+```
+You should be ready to go! Other weights follow the same scheme.
+
 
 # Expert notes
 To create the weights file one needs to run the  `BFragmentationAnalyzer` on the different fragmentation 

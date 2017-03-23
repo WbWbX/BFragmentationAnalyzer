@@ -17,6 +17,6 @@ struct JetFragInfo_t
   int nbtags,nctags,ntautags;
 };
 
-JetFragInfo_t analyzeJet(reco::GenJet &genJet,float tagScale=1.0E+20);
+JetFragInfo_t analyzeJet(const reco::GenJet &genJet,float tagScale=1.0E+20);
 
 #endif

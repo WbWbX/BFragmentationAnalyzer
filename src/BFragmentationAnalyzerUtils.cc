@@ -1,7 +1,7 @@
 #include "TopQuarkAnalysis/BFragmentationAnalyzer/interface/BFragmentationAnalyzerUtils.h"
 
 //
-JetFragInfo_t analyzeJet(reco::GenJet &genJet,float tagScale)
+JetFragInfo_t analyzeJet(const reco::GenJet &genJet,float tagScale)
 {
   //loop over the constituents to analyze the jet leading pT tag and the neutrinos
   std::vector< const reco::Candidate * > jconst=genJet.getJetConstituentsQuick();
