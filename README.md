@@ -70,4 +70,4 @@ The information is summarized below
 The figure below summarizes this table and shows the inclusive BR obtained directly from Pythia8
 and the envelope assigned to cover the uncertainties and differences in the BRs.
 
-(data/semilepbr_unc.png)
+![semilep br](data/semilepbr_unc.png)
