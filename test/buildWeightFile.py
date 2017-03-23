@@ -3,10 +3,12 @@
 import ROOT
 from runWeightCreationLoop import TUNES,MAXEVENTS
 
-BREXC=0.230602
-BRCEN=0.099170
-BRDOWN=0.1033-0.0028
-BRUP=0.1099+0.0028
+BRs=[
+    (511, 'B^{0}',        0.23845, 0.1043, 0.1033, 0.0028),
+    (521, 'B^{+}',        0.25579, 0.1129, 0.1099, 0.0028),
+    (531, 'B^{0}_{s}',    0.21920, 0.0930, 0.0960, 0.008),
+    (5122, '#Lambda_{b}', 0.17870, 0.0770, 0.1030, 0.0022)
+    ]
 
 """
 Interpolate extremes and then derive the weights based on a 2nd order spline for the remaining nodes
@@ -71,21 +73,25 @@ def main():
         #raw_input()
 
     #semi-leptonic BRs
-
-    #scale up the exclusive BRs
-    brexcUp   = BREXC*(BRUP/BRCEN)
-    brexcDown = BREXC*(BRDOWN/BRCEN)
-
     semilepbrUp=ROOT.TGraph()
     semilepbrUp.SetName("semilepbrUp")
-    semilepbrUp.SetPoint(0,(1-brexcUp)/(1-BREXC),1.0)
-    semilepbrUp.SetPoint(1,brexcUp/BREXC,1.0)
-    semilepbrUp.Write()
-
     semilepbrDown=ROOT.TGraph()
     semilepbrDown.SetName("semilepbrDown")
-    semilepbrDown.SetPoint(0,(1-brexcDown)/(1-BREXC),0.95)
-    semilepbrDown.SetPoint(1,brexcDown/BREXC,1.02)
+
+    for entry in BRs:
+
+        i=semilepbrUp.GetN()
+        pid,_,py8inc,py8exc,pdg,pdgUnc=entry
+
+        brUp   = py8inc*(1+ROOT.TMath.Max((pdg+pdgUnc)-py8exc,0.)/py8exc)
+        semilepbrUp.SetPoint(i,     pid*(-1), (1-brUp)/(1-py8inc))
+        semilepbrUp.SetPoint(i+1,   pid,      brUp/py8inc)
+
+        brDown = py8inc*(1-ROOT.TMath.Max(py8exc-(pdg-pdgUnc),0.)/py8exc)
+        semilepbrDown.SetPoint(i,   pid*(-1), (1-brDown)/(1-py8inc))
+        semilepbrDown.SetPoint(i+1, pid,      brDown/py8inc)
+
+    semilepbrUp.Write()
     semilepbrDown.Write()
         
 

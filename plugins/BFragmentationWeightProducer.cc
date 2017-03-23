@@ -23,10 +23,10 @@
 using namespace std;
 
 
-class BFragmentationProducer : public edm::stream::EDProducer<> {
+class BFragmentationWeightProducer : public edm::stream::EDProducer<> {
    public:
-      explicit BFragmentationProducer(const edm::ParameterSet&);
-      ~BFragmentationProducer();
+      explicit BFragmentationWeightProducer(const edm::ParameterSet&);
+      ~BFragmentationWeightProducer();
 
       static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
@@ -40,7 +40,7 @@ class BFragmentationProducer : public edm::stream::EDProducer<> {
 };
 
 //
-BFragmentationProducer::BFragmentationProducer(const edm::ParameterSet& iConfig):
+BFragmentationWeightProducer::BFragmentationWeightProducer(const edm::ParameterSet& iConfig):
   genJetsToken_(consumes<std::vector<reco::GenJet> >(edm::InputTag("pseudoTop:jets")))
 {
   std::string weights[]={"upFrag","centralFrag","downFrag","PetersonFrag","semilepbrUp","semilepbrDown"};
@@ -59,12 +59,12 @@ BFragmentationProducer::BFragmentationProducer(const edm::ParameterSet& iConfig)
 }
 
 //
-BFragmentationProducer::~BFragmentationProducer()
+BFragmentationWeightProducer::~BFragmentationWeightProducer()
 {
 }
 
 //
-void BFragmentationProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
+void BFragmentationWeightProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
    using namespace edm;
    edm::Handle<std::vector<reco::GenJet> > genJets;
@@ -86,13 +86,24 @@ void BFragmentationProducer::produce(edm::Event& iEvent, const edm::EventSetup& 
        jetWeights["PetersonFrag"].push_back(wgtGr_["PetersonFrag"]->Eval(jinfo.xb));
 
        float semilepbrUp(1.0),semilepbrDown(1.0);
-       if(IS_BHADRON_PDGID(jinfo.leadTagId))
+       int absBid(abs(jinfo.leadTagId));
+       if(absBid==511 || absBid==521 || absBid==531 || absBid==5122)
 	 {
-	   semilepbrUp=wgtGr_["semilepbrUp"]->Eval(jinfo.hasSemiLepDecay);
-	   semilepbrDown=wgtGr_["semilepbrDown"]->Eval(jinfo.hasSemiLepDecay);
+	   int bid( jinfo.hasSemiLepDecay ? absBid : -absBid);
+	   semilepbrUp=wgtGr_["semilepbrUp"]->Eval(bid);
+	   semilepbrDown=wgtGr_["semilepbrDown"]->Eval(bid);
 	 }
        jetWeights["semilepbrUp"].push_back(semilepbrUp);
        jetWeights["semilepbrDown"].push_back(semilepbrDown);
+
+       if(IS_BHADRON_PDGID(absBid))
+	 cout << genJet.pt()       << " GeV jet matched with " << absBid 
+	      << " upFrag: "       << wgtGr_["upFrag"]->Eval(jinfo.xb)
+	      << " centralFrag: "  << wgtGr_["centralFrag"]->Eval(jinfo.xb)
+	      << " downFrag: "     << wgtGr_["downFrag"]->Eval(jinfo.xb)
+	      << " PetersonFrag: " << wgtGr_["PetersonFrag"]->Eval(jinfo.xb)
+	      << " semilep+: "     << semilepbrUp 
+	      << " semilep-: "     << semilepbrDown << endl;
      }
 
    //put in event
@@ -107,16 +118,16 @@ void BFragmentationProducer::produce(edm::Event& iEvent, const edm::EventSetup& 
 }
 
 //
-void BFragmentationProducer::beginStream(edm::StreamID)
+void BFragmentationWeightProducer::beginStream(edm::StreamID)
 {
 }
 
 //
-void BFragmentationProducer::endStream() {
+void BFragmentationWeightProducer::endStream() {
 }
 
 //
-void BFragmentationProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+void BFragmentationWeightProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   //The following says we do not know what parameters are allowed so do no validation
   // Please change this to state exactly what you do use, even if it is no parameters
   edm::ParameterSetDescription desc;
@@ -125,4 +136,4 @@ void BFragmentationProducer::fillDescriptions(edm::ConfigurationDescriptions& de
 }
 
 //define this as a plug-in
-DEFINE_FWK_MODULE(BFragmentationProducer);
+DEFINE_FWK_MODULE(BFragmentationWeightProducer);

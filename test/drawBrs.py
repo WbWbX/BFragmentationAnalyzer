@@ -1,85 +1,83 @@
 #!/usr/bin/env python
 
 import ROOT
-from buildWeightFile import BRCEN,BRDOWN,BRUP
 
-ROOT.gROOT.SetBatch(True)
-ROOT.gStyle.SetOptStat(0)
-ROOT.gStyle.SetOptTitle(0)
+from buildWeightFile import BRs
 
-c=ROOT.TCanvas('c','c',500,500)
-c.SetTopMargin(0.05)
-c.SetBottomMargin(0.1)
-c.SetRightMargin(0.05)
-c.SetLeftMargin(0.1)
+def getPythia8Envelope():
+    ROOT.gROOT.SetBatch(True)
+    ROOT.gStyle.SetOptStat(0)
+    ROOT.gStyle.SetOptTitle(0)
+    
+    c=ROOT.TCanvas('c','c',500,500)
+    c.SetTopMargin(0.05)
+    c.SetBottomMargin(0.1)
+    c.SetRightMargin(0.05)
+    c.SetLeftMargin(0.1)
 
-pdg=ROOT.TGraphErrors()
-pdg.SetName('pdg')
-pdg.SetTitle('PDG 2016')
-pdg.SetMarkerStyle(20)
-pdg.SetPoint(0,0.1099,0.3)
-pdg.SetPointError(0,0.0028,0.)
-pdg.SetPoint(1,0.1033,1.3)
-pdg.SetPointError(1,0.0028,0.)
-pdg.SetPoint(2,0.096,2.3)
-pdg.SetPointError(2,0.008,0.)
-pdg.SetPoint(3,0.103,3.3)
-pdg.SetPointError(3,0.0022,0.)
+    frame=ROOT.TH1F('frame',';BR(X#rightarrowl#nuX)',1,0.06,0.15)
+    frame.GetYaxis().SetRangeUser(0,4)
+    frame.GetYaxis().SetNdivisions(0)
+    frame.Draw()
 
-py8=ROOT.TGraphErrors()
-py8.SetName('py8')
-py8.SetTitle('Pythia8')
-py8.SetMarkerStyle(24)
-py8.SetPoint(0,0.1129,0.7)
-py8.SetPointError(0,0.0,0.)
-py8.SetPoint(1,0.10429,1.7)
-py8.SetPointError(1,0.0,0.)
-py8.SetPoint(2,0.093,2.7)
-py8.SetPointError(2,0.0,0.)
-py8.SetPoint(3,0.077,3.7)
-py8.SetPointError(3,0.0,0.)
+    txt=ROOT.TLatex()
+    txt.SetTextFont(42)
+    txt.SetTextSize(0.04)
 
-py8inc=ROOT.TGraphAsymmErrors()
-py8inc.SetName('py8inc')
-py8inc.SetTitle('Pythia8 exc')
-py8inc.SetMarkerColor(ROOT.kRed)
-py8inc.SetLineColor(ROOT.kRed)
-py8inc.SetLineWidth(2)
-py8inc.SetMarkerStyle(24)
-py8inc.SetPoint(0,BRCEN,4.7)
-py8inc.SetPointError(0,BRCEN-BRDOWN,BRUP-BRCEN,0.,0.)
+    gr_pdg=ROOT.TGraphErrors()
+    gr_pdg.SetName('pdg')
+    gr_pdg.SetTitle('PDG 2016')
+    gr_pdg.SetMarkerStyle(20)
+    gr_py8=ROOT.TGraphErrors()
+    gr_py8.SetName('py8')
+    gr_py8.SetTitle('Pythia8')
+    gr_py8.SetMarkerStyle(24)
+    gr_py8env=ROOT.TGraphAsymmErrors()
+    gr_py8env.SetName('py8env')
+    gr_py8env.SetTitle('Pythia8 env')
+    gr_py8env.SetFillStyle(3001)
+    gr_py8env.SetFillColor(ROOT.kGray)
+    xpdg,xpy8,y=ROOT.Double(0),ROOT.Double(0),ROOT.Double(0)
+    for entry in BRs:
 
-py8env=ROOT.TGraph()
-py8env.SetName('py8env')
-py8env.SetTitle('Pythia8 env')
-py8env.SetFillStyle(3001)
-py8env.SetFillColor(ROOT.kGray)
-py8env.SetPoint(0,BRDOWN,0)
-py8env.SetPoint(1,BRDOWN,5)
-py8env.SetPoint(2,BRUP,5)
-py8env.SetPoint(3,BRUP,0)
-py8env.SetPoint(4,BRDOWN,0)
+        i=gr_py8env.GetN()
+        pid,pname,py8inc,py8exc,pdg,pdgUnc=entry
 
+        gr_py8env.SetPoint(i,py8exc,i+0.5)
+        gr_py8env.SetPointError(i,
+                                ROOT.TMath.Max(py8exc-(pdg-pdgUnc),0.),
+                                ROOT.TMath.Max((pdg+pdgUnc)-py8exc,0.),
+                                0.5,
+                                0.5)
 
-frame=ROOT.TH1F('frame',';BR(X#rightarrowl#nuX)',1,0.05,0.18)
-frame.GetYaxis().SetRangeUser(0,5)
-frame.GetYaxis().SetNdivisions(0)
-frame.Draw()
-py8env.Draw('f')
-pdg.Draw('p')
-py8.Draw('p')
-py8inc.Draw('p')
+        gr_py8.SetPoint(i,py8exc,i+0.7)
+        gr_py8.SetPointError(i,0.,0.)
+        
+        gr_pdg.SetPoint(i,pdg,i+0.3)
+        gr_pdg.SetPointError(i,pdgUnc,0.)
 
-txt=ROOT.TLatex()
-txt.SetTextFont(42)
-txt.SetTextSize(0.04)
-txt.DrawLatex(0.15,0.5,'B^{+}')
-txt.DrawLatex(0.15,1.5,'B^{0}')
-txt.DrawLatex(0.15,2.5,'B^{0}_{s}')
-txt.DrawLatex(0.15,3.5,'#Lambda_{b}')
-txt.DrawLatex(0.15,4.5,'#splitline{Pythia8 excl.}{+envelope}')
-txt.DrawLatex(0.15,4.1,'#scale[0.8]{%3.3f^{+%3.3f}_{-%3.3f}}'%(BRCEN,BRUP-BRCEN,BRCEN-BRDOWN))
+        txt.DrawLatex(0.13,i+0.5,pname)
 
-c.Modified()
-c.Update()
-c.SaveAs('${CMSSW_BASE}/src/TopQuarkAnalysis/BFragmentationAnalyzer/data/semilepbr_unc.png')
+    gr_py8env.Draw('e2')
+    gr_pdg.Draw('p')
+    gr_py8.Draw('p')
+    
+    leg=ROOT.TLegend(0.15,0.4,0.4,0.2)
+    leg.SetBorderSize(0)
+    leg.SetFillStyle(0)
+    leg.SetTextFont(42)
+    leg.SetTextSize(0.04)
+    leg.AddEntry(gr_pdg,gr_pdg.GetTitle(),'ep')
+    leg.AddEntry(gr_py8,gr_py8.GetTitle(),'p')
+    leg.Draw()
+    
+    c.Modified()
+    c.Update()
+    c.SaveAs('${CMSSW_BASE}/src/TopQuarkAnalysis/BFragmentationAnalyzer/data/semilepbr_unc.png')
+    
+
+def main():
+    getPythia8Envelope()
+
+if __name__ == "__main__":
+    main()
