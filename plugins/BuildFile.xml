@@ -5,8 +5,7 @@
 <use name="CommonTools/UtilAlgos"/>
 <use name="DataFormats/JetReco"/>
 <use name="DataFormats/HepMCCandidate"/>
+<use name="TopQuarkAnalysis/BFragmentationAnalyzer"/>
 <use name="root" />
 <Flags CXXFLAGS="-ggdb"/>
-<export>
-  <lib name="1"/>
-</export>
+<flags EDM_PLUGIN="1"/>
