@@ -42,12 +42,14 @@ BFragmentationAnalyzer::BFragmentationAnalyzer(const edm::ParameterSet& iConfig)
 {
   //prepare monitoring histograms
   size_t nhadrons=hadronList_.size()+1;
-  histos_["semilepbr"] = fs->make<TH1F>("semilepbr", ";B-hadron;BR",nhadrons,0,nhadrons);
+  histos_["semilepbr"]    = fs->make<TH1F>("semilepbr", ";B-hadron;BR",nhadrons,0,nhadrons);
+  histos_["semilepbrinc"] = fs->make<TH1F>("semilepbrinc", ";B-hadron;BR",nhadrons,0,nhadrons);
   for(size_t i=0; i<nhadrons; i++)
     {
       std::string name("inc");
       if(i) { char buf[20]; sprintf(buf,"%d", hadronList_[i-1]); name=buf; }
       histos_["semilepbr"]->GetXaxis()->SetBinLabel(i+1,name.c_str());
+      histos_["semilepbrinc"]->GetXaxis()->SetBinLabel(i+1,name.c_str());
       histos_["xb_"+name] = fs->make<TH1F>(("xb_"+name).c_str(), (name+";x_{b}=p_{T}(B)/p_{T}(jet); Jets").c_str(), 100, 0, 2);
     }
   for(auto it : histos_) it.second->Sumw2();
@@ -76,17 +78,26 @@ void BFragmentationAnalyzer::analyze(const edm::Event& iEvent, const edm::EventS
       if(!IS_BHADRON_PDGID(absid)) continue;
 
       //inclusive histos
-      if(jinfo.hasSemiLepDecay) histos_["semilepbr"]->Fill(0);
+      if(jinfo.hasSemiLepDecay) 
+	{
+	  if(!jinfo.hasTauSemiLepDecay)
+	    histos_["semilepbr"]->Fill(0);
+	  histos_["semilepbrinc"]->Fill(0);
+	}
       histos_["xb_inc"]->Fill(jinfo.xb);
-
+      
       //exclusive histograms
       std::vector<int>::iterator hit=std::find(hadronList_.begin(), hadronList_.end(), absid);
       if(hit!=hadronList_.end())
 	{
 	  char buf[20]; 
 	  sprintf(buf,"xb_%d", *hit);
-	  if(jinfo.hasSemiLepDecay && !jinfo.hasTauSemiLepDecay) 
-	    histos_["semilepbr"]->Fill(1+hit-hadronList_.begin());
+	  if(jinfo.hasSemiLepDecay)
+	    {
+	      if(!jinfo.hasTauSemiLepDecay) 
+		histos_["semilepbr"]->Fill(1+hit-hadronList_.begin());
+	      histos_["semilepbrinc"]->Fill(1+hit-hadronList_.begin());
+	    }
 	  histos_[buf]->Fill(jinfo.xb);
 	}
     }

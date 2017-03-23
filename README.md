@@ -40,6 +40,7 @@ For the first case an example is provided below.
 
 ## Accessing the weights in a EDM analyzer
 
+TODO
 
 # Expert notes
 To create the weights file one needs to run the  `BFragmentationAnalyzer` on the different fragmentation 
