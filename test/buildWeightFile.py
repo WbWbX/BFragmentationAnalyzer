@@ -3,6 +3,10 @@
 import ROOT
 from runWeightCreationLoop import TUNES,MAXEVENTS
 
+BRCEN=0.115583
+BRDOWN=0.1033-0.028
+BRUP=0.1099+0.028
+
 """
 Interpolate extremes and then derive the weights based on a 2nd order spline for the remaining nodes
 """
@@ -68,14 +72,14 @@ def main():
     #semi-leptonic BRs
     semilepbrUp=ROOT.TGraph()
     semilepbrUp.SetName("semilepbrUp")
-    semilepbrUp.SetPoint(0,0,1.0)
-    semilepbrUp.SetPoint(1,1,1.0)
+    semilepbrUp.SetPoint(0,(1-BRUP)/(1-BRCEN),1.0)
+    semilepbrUp.SetPoint(1,BRUP/BRCEN,1.0)
     semilepbrUp.Write()
 
     semilepbrDown=ROOT.TGraph()
     semilepbrDown.SetName("semilepbrDown")
-    semilepbrDown.SetPoint(0,0,0.95)
-    semilepbrDown.SetPoint(1,1,1.02)
+    semilepbrDown.SetPoint(0,(1-BRDOWN)/(1-BRCEN),0.95)
+    semilepbrDown.SetPoint(1,BRDOWN/BRCEN,1.02)
     semilepbrDown.Write()
         
 

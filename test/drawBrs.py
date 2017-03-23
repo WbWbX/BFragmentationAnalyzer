@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import ROOT
+from buildWeightFile import BRCEN,BRDOWN,BRUP
 
 ROOT.gROOT.SetBatch(True)
 ROOT.gStyle.SetOptStat(0)
@@ -37,10 +38,6 @@ py8.SetPoint(2,0.093,2.7)
 py8.SetPointError(2,0.0,0.)
 py8.SetPoint(3,0.077,3.7)
 py8.SetPointError(3,0.0,0.)
-
-brcen=0.115583
-brdown=0.1033-0.028
-brup=0.1099+0.028
 
 py8inc=ROOT.TGraphAsymmErrors()
 py8inc.SetName('py8inc')
