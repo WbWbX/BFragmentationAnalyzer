@@ -7,7 +7,7 @@ JetFragInfo_t analyzeJet(reco::GenJet &genJet,float tagScale)
   std::vector< const reco::Candidate * > jconst=genJet.getJetConstituentsQuick();
   const reco::Candidate *leadTagConst=0;
   reco::Candidate::LorentzVector nup4(0,0,0,0);
-  bool hasSemiLepDecay(false);
+  bool hasSemiLepDecay(false),hasTauNeutrino(false);
   int nbtags(0),nctags(0),ntautags(0);
   for(size_t ijc=0; ijc <jconst.size(); ijc++) 
     {
@@ -20,6 +20,7 @@ JetFragInfo_t analyzeJet(reco::GenJet &genJet,float tagScale)
 	{
 	  nup4 += par->p4()*tagScale;
 	  int motherid( abs(par->mother()->pdgId()) );
+	  if(absid==16) hasTauNeutrino=true;
 	  if(IS_BHADRON_PDGID(motherid)) hasSemiLepDecay=true;
 	}
       if(par->status()!=2) continue;
@@ -40,6 +41,7 @@ JetFragInfo_t analyzeJet(reco::GenJet &genJet,float tagScale)
   jinfo.xb              = leadTagConst ? (leadTagConst->pt()*tagScale)/totalP4.pt() : -1;
   jinfo.leadTagId       = leadTagConst ? leadTagConst->pdgId() : 0;
   jinfo.hasSemiLepDecay = hasSemiLepDecay;
+  jinfo.hasTauSemiLepDecay = hasTauNeutrino;
   jinfo.nbtags          = nbtags;
   jinfo.nctags          = nctags;
   jinfo.ntautags        = ntautags;

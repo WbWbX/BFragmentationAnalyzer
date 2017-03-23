@@ -1,4 +1,6 @@
 #include <memory>
+#include <string>
+#include <map>
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/stream/EDProducer.h"
@@ -34,19 +36,26 @@ class BFragmentationProducer : public edm::stream::EDProducer<> {
       virtual void endStream() override;
 
   edm::EDGetTokenT<std::vector<reco::GenJet> > genJetsToken_;
+  std::map<std::string, TGraph *> wgtGr_;
 };
 
 //
 BFragmentationProducer::BFragmentationProducer(const edm::ParameterSet& iConfig):
   genJetsToken_(consumes<std::vector<reco::GenJet> >(edm::InputTag("pseudoTop:jets")))
 {
-  std::string weights[]={"fragUp","fragDown","semilepUp","semilepDown"};
-  for(size_t i=0; i<sizeof(weights)/sizeof(std::string); i++) produces<edm::ValueMap<float> >(weights[i]);
+  std::string weights[]={"upFrag","centralFrag","downFrag","PetersonFrag","semilepbrUp","semilepbrDown"};
 
-  //readout weights from file
+  //readout weights from file and declare them for the producer
   edm::FileInPath fp = iConfig.getParameter<edm::FileInPath>("cfg");
   TFile *fIn=TFile::Open(fp.fullPath().c_str());
-  cout << fIn << endl;
+  for(size_t i=0; i<sizeof(weights)/sizeof(std::string); i++)
+    {
+      produces<edm::ValueMap<float> >(weights[i]);
+      TGraph *gr=(TGraph *)fIn->Get(weights[i].c_str());
+      if(gr==0) continue;
+      wgtGr_[weights[i]]=gr;
+    }
+  fIn->Close();
 }
 
 //
@@ -61,18 +70,29 @@ void BFragmentationProducer::produce(edm::Event& iEvent, const edm::EventSetup& 
    edm::Handle<std::vector<reco::GenJet> > genJets;
    iEvent.getByToken(genJetsToken_,genJets);
    std::map< std::string, std::vector<float> > jetWeights;
-   jetWeights["fragUp"]=std::vector<float>();
-   jetWeights["fragDown"]=std::vector<float>();
-   jetWeights["semilepUp"]=std::vector<float>();
-   jetWeights["semilepDown"]=std::vector<float>();
+   jetWeights["upFrag"]=std::vector<float>();
+   jetWeights["centralFrag"]=std::vector<float>();
+   jetWeights["downFrag"]=std::vector<float>();
+   jetWeights["PetersonFrag"]=std::vector<float>();
+   jetWeights["semilepbrUp"]=std::vector<float>();
+   jetWeights["semilepbrDown"]=std::vector<float>();
    for(auto genJet : *genJets)
      {
        //map the gen particles which are clustered in this jet
        JetFragInfo_t jinfo=analyzeJet(genJet);
-       jetWeights["fragUp"].push_back(jinfo.xb);
-       jetWeights["fragDown"].push_back(jinfo.xb);
-       jetWeights["semilepUp"].push_back(jinfo.xb);
-       jetWeights["semilepDown"].push_back(jinfo.xb);
+       jetWeights["upFrag"].push_back(wgtGr_["upFrag"]->Eval(jinfo.xb));
+       jetWeights["centralFrag"].push_back(wgtGr_["centralFrag"]->Eval(jinfo.xb));
+       jetWeights["downFrag"].push_back(wgtGr_["downFrag"]->Eval(jinfo.xb));
+       jetWeights["PetersonFrag"].push_back(wgtGr_["PetersonFrag"]->Eval(jinfo.xb));
+
+       float semilepbrUp(1.0),semilepbrDown(1.0);
+       if(IS_BHADRON_PDGID(jinfo.leadTagId))
+	 {
+	   semilepbrUp=wgtGr_["semilepbrUp"]->Eval(jinfo.hasSemiLepDecay);
+	   semilepbrDown=wgtGr_["semilepbrDown"]->Eval(jinfo.hasSemiLepDecay);
+	 }
+       jetWeights["semilepbrUp"].push_back(semilepbrUp);
+       jetWeights["semilepbrDown"].push_back(semilepbrDown);
      }
 
    //put in event

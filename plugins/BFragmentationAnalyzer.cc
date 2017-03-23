@@ -85,7 +85,8 @@ void BFragmentationAnalyzer::analyze(const edm::Event& iEvent, const edm::EventS
 	{
 	  char buf[20]; 
 	  sprintf(buf,"xb_%d", *hit);
-	  if(jinfo.hasSemiLepDecay) histos_["semilepbr"]->Fill(1+hit-hadronList_.begin());
+	  if(jinfo.hasSemiLepDecay && !jinfo.hasTauSemiLepDecay) 
+	    histos_["semilepbr"]->Fill(1+hit-hadronList_.begin());
 	  histos_[buf]->Fill(jinfo.xb);
 	}
     }
