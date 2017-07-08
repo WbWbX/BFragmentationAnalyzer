@@ -26,7 +26,7 @@ branching ratios of the B hadrons according to the uncertainties
 The analyzer can be run on the output of the pseudo-top producer.
 The example below showers some Pohweg LHE events with Pythia8 setting a specific Bowler-Lund parameters.
 ```
-cmsRun test/runBFragmentationAnalyzer_cfg.py rFactB=0.855 outputFile=xb_central.root
+cmsRun test/runBFragmentationAnalyzer_cfg.py param=0.855  outputFile=xb_central.root
 ```
 The producer can also be run on the output of the pseudo-top producer.
 The example below shows how to do it starting from a MiniAOD file.
@@ -105,7 +105,7 @@ The information is summarized below for the exclusive decay modes (no taus accou
 | ------------- | ------------- | -------------- |
 | B+            | 0.1129        | 0.1099+-0.0028 |
 | B0            | 0.10429       | 0.1033+-0.0028 |
-| B0s           | 0.093         | 0.0960+-0.0008 |
+| B0s           | 0.093         | 0.0960+-0.008  |
 | Lambdab       | 0.077         | 0.1030+-0.0022 | 
 
 The figure below summarizes this table and shows the inclusive BR obtained directly from Pythia8
