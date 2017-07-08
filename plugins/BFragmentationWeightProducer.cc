@@ -80,19 +80,31 @@ void BFragmentationWeightProducer::produce(edm::Event& iEvent, const edm::EventS
      {
        //map the gen particles which are clustered in this jet
        JetFragInfo_t jinfo=analyzeJet(genJet);
-       jetWeights["upFrag"].push_back(wgtGr_["upFrag"]->Eval(jinfo.xb));
-       jetWeights["centralFrag"].push_back(wgtGr_["centralFrag"]->Eval(jinfo.xb));
-       jetWeights["downFrag"].push_back(wgtGr_["downFrag"]->Eval(jinfo.xb));
-       jetWeights["PetersonFrag"].push_back(wgtGr_["PetersonFrag"]->Eval(jinfo.xb));
+       
+       //evaluate the weight to an alternative fragmentation model (if a tag id is available)
+       if(jinfo.leadTagId != 0)
+       {
+        jetWeights["upFrag"].push_back(wgtGr_["upFrag"]->Eval(jinfo.xb));
+        jetWeights["centralFrag"].push_back(wgtGr_["centralFrag"]->Eval(jinfo.xb));
+        jetWeights["downFrag"].push_back(wgtGr_["downFrag"]->Eval(jinfo.xb));
+        jetWeights["PetersonFrag"].push_back(wgtGr_["PetersonFrag"]->Eval(jinfo.xb));
+       }
+       else
+       {
+        jetWeights["upFrag"].push_back(1.);
+        jetWeights["centralFrag"].push_back(1.);
+        jetWeights["downFrag"].push_back(1.);
+        jetWeights["PetersonFrag"].push_back(1.);
+       }
 
        float semilepbrUp(1.0),semilepbrDown(1.0);
        int absBid(abs(jinfo.leadTagId));
        if(absBid==511 || absBid==521 || absBid==531 || absBid==5122)
-	 {
-	   int bid( jinfo.hasSemiLepDecay ? absBid : -absBid);
-	   semilepbrUp=wgtGr_["semilepbrUp"]->Eval(bid);
-	   semilepbrDown=wgtGr_["semilepbrDown"]->Eval(bid);
-	 }
+	   {
+	    int bid( jinfo.hasSemiLepDecay ? absBid : -absBid);
+	    semilepbrUp=wgtGr_["semilepbrUp"]->Eval(bid);
+	    semilepbrDown=wgtGr_["semilepbrDown"]->Eval(bid);
+	   }
        jetWeights["semilepbrUp"].push_back(semilepbrUp);
        jetWeights["semilepbrDown"].push_back(semilepbrDown);
 
