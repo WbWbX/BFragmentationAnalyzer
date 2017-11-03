@@ -38,7 +38,7 @@ private:
 //
 BFragmentationAnalyzer::BFragmentationAnalyzer(const edm::ParameterSet& iConfig) :
   hadronList_(iConfig.getParameter<std::vector<int> >("hadronList")),
-  genJetsToken_(consumes<std::vector<reco::GenJet> >(edm::InputTag("pseudoTop:jets")))
+  genJetsToken_(consumes<std::vector<reco::GenJet> >(edm::InputTag("particleLevel:jets")))
 {
   //prepare monitoring histograms
   size_t nhadrons=hadronList_.size()+1;
