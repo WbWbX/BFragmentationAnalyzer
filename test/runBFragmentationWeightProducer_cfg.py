@@ -35,10 +35,19 @@ process.mergedGenParticles = cms.EDProducer("MergedGenParticleProducer",
 process.load('GeneratorInterface.RivetInterface.genParticles2HepMC_cfi')
 process.genParticles2HepMC.genParticles = cms.InputTag("mergedGenParticles")
 process.genParticles2HepMC.genEventInfo = cms.InputTag("generator")
-process.load("TopQuarkAnalysis.TopEventProducers.producers.pseudoTop_cfi")
+process.load("GeneratorInterface.RivetInterface.particleLevel_cfi")
+process.particleLevel.excludeNeutrinosFromJetClustering = False
 
 # b-frag weight producer
 process.load('TopQuarkAnalysis.BFragmentationAnalyzer.bfragWgtProducer_cfi')
 
-process.p = cms.Path(process.mergedGenParticles*process.genParticles2HepMC*process.pseudoTop*process.bfragWgtProducer)
+process.p = cms.Path(process.mergedGenParticles*process.genParticles2HepMC*process.particleLevel*process.bfragWgtProducer)
 
+process.out = cms.OutputModule("PoolOutputModule",
+    fileName = cms.untracked.string("bfragWgtProducer.root"),
+    outputCommands = cms.untracked.vstring(
+        "drop *",
+        "keep *_bfragWgtProducer_*_*",
+    ),
+)
+process.outPath = cms.EndPath(process.out)

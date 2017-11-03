@@ -113,8 +113,8 @@ if options.frag=='BL':
 #pseudo-top config
 from GeneratorInterface.RivetInterface.genParticles2HepMC_cfi import genParticles2HepMC
 process.genParticles2HepMC = genParticles2HepMC.clone( genParticles = cms.InputTag("genParticles") )
-process.load("TopQuarkAnalysis.TopEventProducers.producers.pseudoTop_cfi")
-process.pseudoTop.jetMaxEta=cms.double(5.0)
+process.load("GeneratorInterface.RivetInterface.particleLevel_cfi")
+process.particleLevel.excludeNeutrinosFromJetClustering = False
 
 #analysis config
 process.TFileService = cms.Service("TFileService",
@@ -126,7 +126,7 @@ process.load('TopQuarkAnalysis.BFragmentationAnalyzer.bfragAnalysis_cfi')
 # Path and EndPath definitions
 process.ProductionFilterSequence = cms.Sequence(process.generator)
 process.generation_step = cms.Path(process.pgen)
-process.AnalysisSequence = cms.Path(process.genParticles2HepMC*process.pseudoTop*process.bfragAnalysis)
+process.AnalysisSequence = cms.Path(process.genParticles2HepMC*process.particleLevel*process.bfragAnalysis)
 process.genfiltersummary_step = cms.EndPath(process.genFilterSummary)
 process.endjob_step = cms.EndPath(process.endOfProcess)
 

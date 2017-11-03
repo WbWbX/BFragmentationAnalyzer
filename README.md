@@ -1,12 +1,15 @@
 # Introduction
 
 # Installation
-This module depends on the pseudo-top producer and is expected to run for CMSSW versions >80x.
+This module is expected to run for CMSSW versions >80X.
+It depends on the ParticleLevelProducer that is contained in CMSSW >=8_0_28.
+For older releases, it can be obtained via `git cms-merge-topic -u intrepid42:ParticleLevelProducer_80X`.
+
 ```
-cmsrel CMSSW_8_0_26_patch1
-cd CMSSW_8_0_26_patch1/src 
+cmsrel CMSSW_8_0_30
+cd CMSSW_8_0_30/src 
 cmsenv
-git cms-merge-topic -u intrepid42:pseudotoprivet_80x
+mkdir TopQuarkAnalysis
 cd TopQuarkAnalysis
 git clone ssh://git@gitlab.cern.ch:7999/CMS-TOPPAG/BFragmentationAnalyzer.git
 cd -
@@ -23,12 +26,12 @@ to be used on a jet-by-jet case to reweight the fragmentation function and the s
 branching ratios of the B hadrons according to the uncertainties
 
 # Running the plugins
-The analyzer can be run on the output of the pseudo-top producer.
+The analyzer can be run on the output of the ParticleLevelProducer.
 The example below showers some Pohweg LHE events with Pythia8 setting a specific Bowler-Lund parameters.
 ```
 cmsRun test/runBFragmentationAnalyzer_cfg.py param=0.855  outputFile=xb_central.root
 ```
-The producer can also be run on the output of the pseudo-top producer.
+The producer can also be run on the output of the ParticleLevelProducer.
 The example below shows how to do it starting from a MiniAOD file.
 ```
 cmsRun test/runBFragmentationWeightProducer_cfg.py
@@ -49,10 +52,10 @@ Step-by-step instructions to readout one of the weights in your analyzer.
 ```
 2. in the constructor declare what the tokens consume
 ```
-   genJetsToken_(consumes<std::vector<reco::GenJet> >(edm::InputTag("pseudoTop:jets"))),
+   genJetsToken_(consumes<std::vector<reco::GenJet> >(edm::InputTag("particleLevel:jets"))),
    petersonFragToken_(consumes<edm::ValueMap<float> >(edm::InputTag("bfragWgtProducer:PetersonFrag"))),
 ```
-3. in the analyzer method get the genJets, the weights and loop over the jets to analyse them
+3. in the analyzer method get the genJets, the weights and **loop over the jets** to analyse them, and **take the product of the jet weights as event weight**
 ```
   edm::Handle<std::vector<reco::GenJet> > genJets;
   iEvent.getByToken(genJetsToken_,genJets);
@@ -65,7 +68,7 @@ Step-by-step instructions to readout one of the weights in your analyzer.
 	...
     }
 ```
-4. Add the pseudo-top and weight producer snippets to your cfg
+4. Add the particleLevel and weight producer snippets to your cfg
 ```
     process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
     process.mergedGenParticles = cms.EDProducer("MergedGenParticleProducer",
@@ -74,10 +77,11 @@ Step-by-step instructions to readout one of the weights in your analyzer.
     )
     from GeneratorInterface.RivetInterface.genParticles2HepMC_cfi import genParticles2HepMC
     process.genParticles2HepMC = genParticles2HepMC.clone( genParticles = cms.InputTag("mergedGenParticles") )
-    process.load("TopQuarkAnalysis.TopEventProducers.producers.pseudoTop_cfi")
+    process.load("GeneratorInterface.RivetInterface.particleLevel_cfi")
+    process.particleLevel.excludeNeutrinosFromJetClustering = False
     process.load('TopQuarkAnalysis.BFragmentationAnalyzer.bfragWgtProducer_cfi')
     ...
-    process.p = cms.Path(process.mergedGenParticles*process.genParticles2HepMC*process.pseudoTop*process.bfragWgtProducer*...)
+    process.p = cms.Path(process.mergedGenParticles*process.genParticles2HepMC*process.particleLevel*process.bfragWgtProducer*...)
 ```
 You should be ready to go! Other weights follow the same scheme.
 

@@ -41,7 +41,7 @@ class BFragmentationWeightProducer : public edm::stream::EDProducer<> {
 
 //
 BFragmentationWeightProducer::BFragmentationWeightProducer(const edm::ParameterSet& iConfig):
-  genJetsToken_(consumes<std::vector<reco::GenJet> >(edm::InputTag("pseudoTop:jets")))
+  genJetsToken_(consumes<std::vector<reco::GenJet> >(edm::InputTag("particleLevel:jets")))
 {
   std::string weights[]={"upFrag","centralFrag","downFrag","PetersonFrag","semilepbrUp","semilepbrDown"};
 

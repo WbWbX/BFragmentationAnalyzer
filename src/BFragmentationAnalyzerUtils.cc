@@ -6,7 +6,6 @@ JetFragInfo_t analyzeJet(const reco::GenJet &genJet,float tagScale)
   //loop over the constituents to analyze the jet leading pT tag and the neutrinos
   std::vector< const reco::Candidate * > jconst=genJet.getJetConstituentsQuick();
   const reco::Candidate *leadTagConst=0;
-  reco::Candidate::LorentzVector nup4(0,0,0,0);
   bool hasSemiLepDecay(false),hasTauNeutrino(false);
   int nbtags(0),nctags(0),ntautags(0);
   for(size_t ijc=0; ijc <jconst.size(); ijc++) 
@@ -18,10 +17,9 @@ JetFragInfo_t analyzeJet(const reco::GenJet &genJet,float tagScale)
       //which ones are coming from B hadron decays
       if(par->status()==1 && IS_NEUTRINO_PDGID(absid)) 
 	{
-	  nup4 += par->p4()*tagScale;
-	  int motherid( abs(par->mother()->pdgId()) );
 	  if(absid==16) hasTauNeutrino=true;
-	  if(IS_BHADRON_PDGID(motherid)) hasSemiLepDecay=true;
+          //no neutrino mother id available anymore, so we consider every neutrino as hint for SemiLepDecay candidate
+	  hasSemiLepDecay=true;
 	}
       if(par->status()!=2) continue;
       
@@ -37,7 +35,7 @@ JetFragInfo_t analyzeJet(const reco::GenJet &genJet,float tagScale)
       
   //fill the jet info
   JetFragInfo_t jinfo;
-  reco::Candidate::LorentzVector totalP4(genJet.p4()+nup4);
+  reco::Candidate::LorentzVector totalP4(genJet.p4());
   jinfo.xb              = leadTagConst ? (leadTagConst->pt()*tagScale)/totalP4.pt() : -1;
   jinfo.leadTagId       = leadTagConst ? leadTagConst->pdgId() : 0;
   jinfo.hasSemiLepDecay = hasSemiLepDecay;
