@@ -81,8 +81,11 @@ void BFragmentationWeightProducer::produce(edm::Event& iEvent, const edm::EventS
        //map the gen particles which are clustered in this jet
        JetFragInfo_t jinfo=analyzeJet(genJet);
        
-       //evaluate the weight to an alternative fragmentation model (if a tag id is available)
-       if(jinfo.leadTagId != 0)
+       int absBid(abs(jinfo.leadTagId));
+       
+       //evaluate the weight to an alternative fragmentation model 
+       //(if a tag id corresponding to a B hadron is available)
+       if(IS_BHADRON_PDGID(absBid))
        {
         jetWeights["upFrag"].push_back(wgtGr_["upFrag"]->Eval(jinfo.xb));
         jetWeights["centralFrag"].push_back(wgtGr_["centralFrag"]->Eval(jinfo.xb));
@@ -97,8 +100,8 @@ void BFragmentationWeightProducer::produce(edm::Event& iEvent, const edm::EventS
         jetWeights["PetersonFrag"].push_back(1.);
        }
 
+       //evaluate the weight for a different semileptonic BR
        float semilepbrUp(1.0),semilepbrDown(1.0);
-       int absBid(abs(jinfo.leadTagId));
        if(absBid==511 || absBid==521 || absBid==531 || absBid==5122)
 	   {
 	    int bid( jinfo.hasSemiLepDecay ? absBid : -absBid);
