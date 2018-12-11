@@ -4,6 +4,7 @@
 This module is expected to run for CMSSW versions >80X.
 It depends on the ParticleLevelProducer that is contained in CMSSW >=8_0_28.
 For older releases, it can be obtained via `git cms-merge-topic -u intrepid42:ParticleLevelProducer_80X`.
+For 94x releases use the 94x branch.
 
 ```
 cmsrel CMSSW_8_0_30
