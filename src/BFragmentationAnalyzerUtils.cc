@@ -13,12 +13,11 @@ JetFragInfo_t analyzeJet(const reco::GenJet &genJet,float tagScale)
       const reco::Candidate *par=jconst[ijc];
       int absid=abs(par->pdgId());
 
-      //account for neutrinos for the total energy estimation and check 
-      //which ones are coming from B hadron decays
-      if(par->status()==1 && IS_NEUTRINO_PDGID(absid)) 
+      //account for neutrinos or charged leptons in the final state
+      //as an hint of semi-leptonic decays
+      if(par->status()==1 && (IS_NEUTRINO_PDGID(absid) || IS_CHLEPTON_PDGID(absid))) 
 	{
 	  if(absid==16) hasTauNeutrino=true;
-          //no neutrino mother id available anymore, so we consider every neutrino as hint for SemiLepDecay candidate
 	  hasSemiLepDecay=true;
 	}
       if(par->status()!=2) continue;
