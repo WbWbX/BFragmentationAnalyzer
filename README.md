@@ -1,18 +1,17 @@
 # Introduction
 
 # Installation
-This module is expected to run for CMSSW versions >80X.
-It depends on the ParticleLevelProducer that is contained in CMSSW >=8_0_28.
-For older releases, it can be obtained via `git cms-merge-topic -u intrepid42:ParticleLevelProducer_80X`.
-For 94x releases use the 94x branch.
+This module is expected to run for 94X CMSSW versions.
+It depends on the ParticleLevelProducer that is contained in CMSSW >=9_4_10.
+For older releases, use the master branch.
 
 ```
-cmsrel CMSSW_8_0_30
-cd CMSSW_8_0_30/src 
+cmsrel CMSSW_9_4_10
+cd CMSSW_9_4_10/src 
 cmsenv
 mkdir TopQuarkAnalysis
 cd TopQuarkAnalysis
-git clone ssh://git@gitlab.cern.ch:7999/CMS-TOPPAG/BFragmentationAnalyzer.git
+git clone https://gitlab.cern.ch/CMS-TOPPAG/BFragmentationAnalyzer.git -b master_94x
 cd -
 scram b
 ```
