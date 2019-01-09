@@ -1,7 +1,7 @@
 # Introduction
 
 # Installation
-This module is expected to run for 94X CMSSW versions.
+This module is expected to run for CMSSW versions >94X.
 It depends on the ParticleLevelProducer that is contained in CMSSW >=9_4_10.
 For older releases, use the master branch.
 
