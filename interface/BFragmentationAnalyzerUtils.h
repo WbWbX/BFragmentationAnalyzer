@@ -8,6 +8,7 @@
 #define IS_BHADRON_PDGID(id) ( ((abs(id)/100)%10 == 5) || (abs(id) >= 5000 && abs(id) <= 5999) )
 #define IS_CHADRON_PDGID(id) ( ((abs(id)/100)%10 == 4) || (abs(id) >= 4000 && abs(id) <= 4999) )
 #define IS_NEUTRINO_PDGID(id) ( (abs(id) == 12) || (abs(id) == 14) || (abs(id) == 16) )
+#define IS_CHLEPTON_PDGID(id) ( (abs(id) == 11) || (abs(id) == 13) || (abs(id) == 15) )
 
 struct JetFragInfo_t
 {

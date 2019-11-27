@@ -8,7 +8,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 
-#include "Utilities/General/interface/FileInPath.h"
+#include "FWCore/ParameterSet/interface/FileInPath.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/StreamID.h"
@@ -123,11 +123,11 @@ void BFragmentationWeightProducer::produce(edm::Event& iEvent, const edm::EventS
    //put in event
    for(auto it : jetWeights)
      {
-       auto_ptr<ValueMap<float> > valMap(new ValueMap<float>());
-       typename edm::ValueMap<float>::Filler filler(*valMap);
+       std::unique_ptr<ValueMap<float> > valMap(new ValueMap<float>());
+       edm::ValueMap<float>::Filler filler(*valMap);
        filler.insert(genJets, it.second.begin(), it.second.end());
        filler.fill();
-       iEvent.put(valMap, it.first);
+       iEvent.put(std::move(valMap), it.first);
      }
 }
 
