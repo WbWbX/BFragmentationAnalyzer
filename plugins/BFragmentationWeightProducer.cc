@@ -36,27 +36,26 @@ class BFragmentationWeightProducer : public edm::stream::EDProducer<> {
       virtual void endStream() override;
 
   edm::EDGetTokenT<std::vector<reco::GenJet> > genJetsToken_;
+  const std::vector<std::string> weights_;
   std::map<std::string, TGraph *> wgtGr_;
 };
 
 //
 BFragmentationWeightProducer::BFragmentationWeightProducer(const edm::ParameterSet& iConfig):
-  genJetsToken_(consumes<std::vector<reco::GenJet> >(iConfig.getParameter<edm::InputTag>("src")))
+  genJetsToken_(consumes<std::vector<reco::GenJet> >(iConfig.getParameter<edm::InputTag>("src"))),
+  weights_(iConfig.getParameter<std::vector<std::string>>("weights"))
 {
-  
-
-  std::string weights[]={"upFrag","centralFrag","downFrag","PetersonFrag","semilepbrUp","semilepbrDown"};
-
   //readout weights from file and declare them for the producer
   edm::FileInPath fp = iConfig.getParameter<edm::FileInPath>("cfg");
-  TFile *fIn=TFile::Open(fp.fullPath().c_str());
-  for(size_t i=0; i<sizeof(weights)/sizeof(std::string); i++)
-    {
-      produces<edm::ValueMap<float> >(weights[i]);
-      TGraph *gr=(TGraph *)fIn->Get(weights[i].c_str());  
-      if(gr==0) continue;
-      wgtGr_[weights[i]]=gr;
-    }
+  TFile *fIn = TFile::Open(fp.fullPath().c_str());
+  for (const auto& wgt: weights_) {
+      produces<edm::ValueMap<float> >(wgt);
+      std::string grName = (wgt.find("frag") != std::string::npos) ? (wgt + "_smooth") : wgt; // use the smoothed fragmentation graphs
+      TGraph *gr = static_cast<TGraph*>(fIn->Get(grName.c_str()));  
+      if (!gr) continue;
+      wgtGr_[wgt] = gr;
+  }
+
   fIn->Close();
 }
 
@@ -72,46 +71,32 @@ void BFragmentationWeightProducer::produce(edm::Event& iEvent, const edm::EventS
    edm::Handle<std::vector<reco::GenJet> > genJets;
    iEvent.getByToken(genJetsToken_,genJets);
    std::map< std::string, std::vector<float> > jetWeights;
-   jetWeights["upFrag"]=std::vector<float>();
-   jetWeights["centralFrag"]=std::vector<float>();
-   jetWeights["downFrag"]=std::vector<float>();
-   jetWeights["PetersonFrag"]=std::vector<float>();
-   jetWeights["semilepbrUp"]=std::vector<float>();
-   jetWeights["semilepbrDown"]=std::vector<float>();
-   for(auto genJet : *genJets)
-     {
+   for (const auto& wgt: weights_)
+       jetWeights[wgt] = std::vector<float>();
+
+   for(auto genJet: *genJets) {
        //map the gen particles which are clustered in this jet
        JetFragInfo_t jinfo=analyzeJet(genJet);
        
-       int absBid(abs(jinfo.leadTagId));
-       
-       //evaluate the weight to an alternative fragmentation model 
-       //(if a tag id corresponding to a B hadron is available)
-       if(IS_BHADRON_PDGID(absBid))
-       {
-        jetWeights["upFrag"].push_back(wgtGr_["upFrag"]->Eval(jinfo.xb));
-        jetWeights["centralFrag"].push_back(wgtGr_["centralFrag"]->Eval(jinfo.xb));
-        jetWeights["downFrag"].push_back(wgtGr_["downFrag"]->Eval(jinfo.xb));
-        jetWeights["PetersonFrag"].push_back(wgtGr_["PetersonFrag"]->Eval(jinfo.xb));
-       }
-       else
-       {
-        jetWeights["upFrag"].push_back(1.);
-        jetWeights["centralFrag"].push_back(1.);
-        jetWeights["downFrag"].push_back(1.);
-        jetWeights["PetersonFrag"].push_back(1.);
+       //evaluate the weight to an alternative fragmentation model (if a tag id is available)
+       for (const auto& wgt: weights_) {
+           if (wgt.find("frag") == std::string::npos)
+               continue;
+           if (jinfo.leadTagId != 0)
+               jetWeights[wgt].push_back(wgtGr_[wgt]->Eval(jinfo.xb));
+           else
+               jetWeights[wgt].push_back(1.);
        }
 
-       //evaluate the weight for a different semileptonic BR
-       float semilepbrUp(1.0),semilepbrDown(1.0);
-       if(absBid==511 || absBid==521 || absBid==531 || absBid==5122)
-	   {
-	    int bid( jinfo.hasSemiLepDecay ? absBid : -absBid);
-	    semilepbrUp=wgtGr_["semilepbrUp"]->Eval(bid);
-	    semilepbrDown=wgtGr_["semilepbrDown"]->Eval(bid);
+       float semilepbrUp(1.0), semilepbrDown(1.0);
+       int absBid(abs(jinfo.leadTagId));
+       if (absBid == 511 || absBid == 521 || absBid == 531 || absBid == 5122) {
+           int bid(jinfo.hasSemiLepDecay ? absBid : -absBid);
+           semilepbrUp = wgtGr_["semilepbrup"]->Eval(bid);
+           semilepbrDown = wgtGr_["semilepbrdown"]->Eval(bid);
 	   }
-       jetWeights["semilepbrUp"].push_back(semilepbrUp);
-       jetWeights["semilepbrDown"].push_back(semilepbrDown);
+       jetWeights["semilepbrup"].push_back(semilepbrUp);
+       jetWeights["semilepbrdown"].push_back(semilepbrDown);
 
        /*
        if(IS_BHADRON_PDGID(absBid))
@@ -126,14 +111,13 @@ void BFragmentationWeightProducer::produce(edm::Event& iEvent, const edm::EventS
      }
 
    //put in event
-   for(auto it : jetWeights)
-     {
-       std::unique_ptr<ValueMap<float> > valMap(new ValueMap<float>());
+   for(auto it: jetWeights) {
+       auto valMap = std::make_unique<ValueMap<float> >();
        edm::ValueMap<float>::Filler filler(*valMap);
        filler.insert(genJets, it.second.begin(), it.second.end());
        filler.fill();
        iEvent.put(std::move(valMap), it.first);
-     }
+   } 
 }
 
 //
