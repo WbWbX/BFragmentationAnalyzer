@@ -14,4 +14,6 @@ for tag in ${tags}; do
     hadd -f xb_${tag}.root xb_${tag}_*_*.root && rm xb_${tag}_*_*.root
 done
 
+hadd xb_summedForBR.root *.root
+
 popd

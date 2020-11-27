@@ -21,15 +21,15 @@ Two plugins are available:
 * `BFragmentationAnalyzer`: allows to create some simple histograms
 with the b-fragmentation momentum transfer functions and the number of semi-leptonically decaying B hadrons
 in the simulation
-* `BFragmentationWeightProducer`: puts in the EDM event two ValueMaps with weights 
+* `BFragmentationWeightProducer`: puts in the EDM event ValueMaps with weights 
 to be used on a jet-by-jet case to reweight the fragmentation function and the semi-leptonic 
 branching ratios of the B hadrons according to the uncertainties
 
 # Running the plugins
 The analyzer can be run on the output of the ParticleLevelProducer.
-The example below showers some Pohweg LHE events with Pythia8 setting a specific Bowler-Lund parameters.
+The example below produces some Pohweg TT events and showers them with Pythia8 setting a specific tune and Bowler-Lund parameter.
 ```
-cmsRun test/runBFragmentationAnalyzer_cfg.py param=0.855  outputFile=xb_central.root
+cmsRun test/runBFragmentationAnalyzer_cfg.py frag=BL param=0.855 tune=CP5 outputFile=xb_central.root
 ```
 The producer can also be run on the output of the ParticleLevelProducer.
 The example below shows how to do it starting from a MiniAOD file.
@@ -53,18 +53,18 @@ Step-by-step instructions to readout one of the weights in your analyzer.
 2. in the constructor declare what the tokens consume
 ```
    genJetsToken_(consumes<std::vector<reco::GenJet> >(edm::InputTag("particleLevel:jets"))),
-   petersonFragToken_(consumes<edm::ValueMap<float> >(edm::InputTag("bfragWgtProducer:PetersonFrag"))),
+   fragToken_(consumes<edm::ValueMap<float> >(edm::InputTag("bfragWgtProducer:fragCP5BL"))),
 ```
 3. in the analyzer method get the genJets, the weights and **loop over the jets** to analyse them, and **take the product of the jet weights as event weight**
 ```
   edm::Handle<std::vector<reco::GenJet> > genJets;
   iEvent.getByToken(genJetsToken_,genJets);
-  edm::Handle<edm::ValueMap<float> > petersonFrag;
-  iEvent.getByToken(petersonFragToken_,petersonFrag);
+  edm::Handle<edm::ValueMap<float> > frag;
+  iEvent.getByToken(fragToken_, frag);
   for(auto genJet=genJets->begin(); genJet!=genJets->end(); ++genJet)
     {
         edm::Ref<std::vector<reco::GenJet> > genJetRef(genJets,genJet-genJets->begin());
-	cout << "pt=" << genJet->pt() << " id=" << genJet->pdgId() << " petersonFragWeight=" << (*petersonFrag)[genJetRef] << endl;
+	cout << "pt=" << genJet->pt() << " id=" << genJet->pdgId() << " fragWeight=" << (*frag)[genJetRef] << endl;
 	...
     }
 ```
@@ -87,21 +87,33 @@ You should be ready to go! Other weights follow the same scheme.
 
 
 # Expert notes
+
 To create the weights file one needs to run the  `BFragmentationAnalyzer` on the different fragmentation 
 scenarios needed to estimate the fragmentation/semi-leptonic BR systematics.
-An example is given by 
+
+To submit all of these on condor (on lxplus), run:
 ```
-python test/runWeightCreationLoop.py
+cd test
+./condor_submit.sh condor
+```
+When the jobs are finished, merge the files and put them in a "results" folder:
+```
+./merge_outputs.sh condor
+mkdir results; mv condor/*.root results/
 ```
 This will output several ROOT files, one per scenario which can be used to obtain the ratio with respect to the nominal scenario
-used in the official CMSSW productions. A script is provided to deploy the weights file under `data` and can be run as
+used in the official CMSSW productions. Next, the weights can be computed from the different scenarios and the results moved to the `data` folder:
 ```
-python test/buildWeightFile.py 
+./buildWeightFile.py -i results -o results
+./buildBRweights.py -i results -o results
+mv results/b*weights*.root ../data/
 ```
-The weights file will contain TGraph objects which can be used to reweight the fragmentation function based on xb=pT(B)/pT(b jet)
+The weights file will TGraph objects which can be used to reweight the fragmentation function based on xb=pT(B)/pT(b jet),
+two-dimensional histograms which can be used to reweight the fragmentation function taking into account the obserbed dependence with genJet pt,
 and the inclusive semi-leptonic branching ratios of the B hadrons. 
-The first is based on the tuning to LEP/SLD data described in https://gitlab.cern.ch/cms-gen/Tuning/merge_requests/2.
-The latter is based on the comparison between  the PDG values (http://pdglive.lbl.gov/Viewer.action) 
+The first are based on the tuning to LEP/SLD data described in https://gitlab.cern.ch/cms-gen/Tuning/merge_requests/2,
+as well as the results from TOP-18-012.
+The latter is based on the comparison between the PDG values (http://pdglive.lbl.gov/Viewer.action) 
 and the Pythia8 decay tables (http://home.thep.lu.se/~torbjorn/pythia82html/ParticleData.html).
 The information is summarized below for the exclusive decay modes (no taus accounted for).
 
