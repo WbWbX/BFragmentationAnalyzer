@@ -164,10 +164,10 @@ def loadAllHists(inDir, name):
             fIn.Close()
     return xb
 
-def buildAndWriteWeights(inDir, outDir, subset):
+def buildAndWriteWeights(inDir, outDir):
     fOut = ROOT.TFile.Open(os.path.join(outDir, "bfragweights.root"), 'recreate')
 
-    xb = loadAllHists(inDir, "bfragAnalysis/xb_lead_" + subset)
+    xb = loadAllHists(inDir, "bfragAnalysis/xb_lead_B")
 
     toDensity(xb[REF])
     #save to file
@@ -179,7 +179,7 @@ def buildAndWriteWeights(inDir, outDir, subset):
         ratio.Divide(xb[REF])
         raw_gr = ROOT.TGraphErrors(ratio)
         raw_gr.SetMarkerStyle(20)
-        raw_gr.SetName("frag{}_{}".format(tag, subset))
+        raw_gr.SetName("frag{}".format(tag))
         raw_gr.SetLineColor(ROOT.kBlue)
         raw_gr.Write()
 
@@ -187,16 +187,16 @@ def buildAndWriteWeights(inDir, outDir, subset):
         xb[tag].Divide(ref_smoothed)
         # sgr = smoothWeights(xb[tag], xb[REF])
         sgr = smoothWeightsAkima(xb[tag], xb[REF], to1AboveThres=True) # interpolate using Akima subspline, set weight to 1 above xb=1
-        sgr.SetName("frag{}_{}_smooth".format(tag, subset))
+        sgr.SetName("frag{}_smooth".format(tag))
         sgr.SetLineColor(ROOT.kRed)
         sgr.Write()
 
     fOut.Close()
 
-def buildAndWrite2DWeights(inDir, outDir, subset):
+def buildAndWrite2DWeights(inDir, outDir):
     fOut = ROOT.TFile.Open(os.path.join(outDir, "bfragweights_vs_pt_debug.root"), 'recreate')
     
-    xb = loadAllHists(inDir, "bfragAnalysis/xb_pt_lead_" + subset)
+    xb = loadAllHists(inDir, "bfragAnalysis/xb_pt_lead_B")
 
     ptBins = [ xb[REF].GetYaxis().GetBinLowEdge(i) for i in range(1, xb[REF].GetYaxis().GetNbins() + 2) ]
     ptBins = np.array(ptBins)
@@ -240,7 +240,7 @@ def buildAndWrite2DWeights(inDir, outDir, subset):
             ratio.Divide(xb_split[REF][ptRange])
             raw_gr = ROOT.TGraphErrors(ratio)
             raw_gr.SetMarkerStyle(20)
-            raw_gr.SetName("frag{}_{}_{}".format(tag, subset, ptRange))
+            raw_gr.SetName("frag{}_{}".format(tag, ptRange))
             raw_gr.SetLineColor(ROOT.kBlue)
             raw_gr.Write()
             raw_graphs[tag][ptRange] = raw_gr
@@ -250,11 +250,11 @@ def buildAndWrite2DWeights(inDir, outDir, subset):
             hist.Divide(ref_smooth)
             raw_sgr = ROOT.TGraphErrors(hist)
             raw_sgr.SetMarkerStyle(20)
-            raw_sgr.SetName("frag{}_{}_{}_rawSmooth".format(tag, subset, ptRange)) # "rawSmooth" = only histogram smoothing, no spline
+            raw_sgr.SetName("frag{}_{}_rawSmooth".format(tag, ptRange)) # "rawSmooth" = only histogram smoothing, no spline
             raw_sgr.SetLineColor(ROOT.kGreen)
             raw_sgr.Write()
             sgr = smoothWeightsAkima(hist, ref_smooth, to1AboveThres=True) # interpolate using Akima subspline, set weight to 1 above xb=1
-            sgr.SetName("frag{}_{}_{}_smooth".format(tag, subset, ptRange))
+            sgr.SetName("frag{}_{}_smooth".format(tag, ptRange))
             sgr.SetLineColor(ROOT.kRed)
             sgr.Write()
             smooth_graphs[tag][ptRange] = sgr
@@ -265,8 +265,8 @@ def buildAndWrite2DWeights(inDir, outDir, subset):
     
     xbBins = np.linspace(0, THRES, 300, endpoint=True)
     for tag in TUNES:
-        raw_th2 = ROOT.TH2F("frag_{}_{}".format(tag, subset), "", len(xbBins) - 1, xbBins, len(ptBins) - 1, ptBins)
-        smooth_th2 = ROOT.TH2F("frag_{}_{}_smooth".format(tag, subset), "", len(xbBins) - 1, xbBins, len(ptBins) - 1, ptBins)
+        raw_th2 = ROOT.TH2F("frag_{}".format(tag), "", len(xbBins) - 1, xbBins, len(ptBins) - 1, ptBins)
+        smooth_th2 = ROOT.TH2F("frag_{}_smooth".format(tag), "", len(xbBins) - 1, xbBins, len(ptBins) - 1, ptBins)
         for i,pt in enumerate(ptBins[:-1]):
             if pt == ptBins[-2]:
                 ptRange = "pT{:.0f}".format(pt)
@@ -286,7 +286,6 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--output', default=os.path.join(os.getenv("CMSSW_BASE"), "src/TopQuarkAnalysis/BFragmentationAnalyzer/data/"), help='Output folder')
     args = parser.parse_args()
 
-    buildAndWriteWeights(args.input, args.output, "inc")
-    buildAndWriteWeights(args.input, args.output, "B")
-    buildAndWrite2DWeights(args.input, args.output, "B")
+    buildAndWriteWeights(args.input, args.output)
+    buildAndWrite2DWeights(args.input, args.output)
     print('Fragmentation been saved to {}'.format(args.output))

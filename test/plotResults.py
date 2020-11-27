@@ -178,8 +178,8 @@ plotCfg = [
     { "name": "bFrag_old", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CUETP8M2T4BLdefault.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CUETP8M2T4 default B-L", "vars": [("CUETP8M2T4 tuned B-L central", options.input + "/xb_CUETP8M2T4BL.root", "bfragAnalysis/xb_lead_B"), ("CUETP8M2T4 B-L TOP-18-012", options.input + "/xb_CUETP8M2T4BLLHC.root", "bfragAnalysis/xb_lead_B") ], "norm": True, "ratio-range": [0.7, 1.5], "nom_to_density": True, "var_to_density": True },
 
     { "name": "bFrag_top-18-012", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5BLdefault.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 default B-L", "vars": [("CUETP8M2T4 B-L TOP-18-012 central", options.input + "/xb_CUETP8M2T4BLLHC.root", "bfragAnalysis/xb_lead_B"), ("CUETP8M2T4 B-L TOP-18-012 up", options.input + "/xb_CUETP8M2T4BLLHCup.root", "bfragAnalysis/xb_lead_B"), ("CUETP8M2T4 B-L TOP-18-012 down", options.input + "/xb_CUETP8M2T4BLLHCdown.root", "bfragAnalysis/xb_lead_B") ], "norm": True, "ratio-range": [0.7, 1.5], "nom_to_density": True, "var_to_density": True },
-    
-    { "name": "bFrag_checkBvsInc", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5BLdefault.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 default, leading B", "vars": [("CP5 default, if(leading=B)", options.input + "/xb_CP5BLdefault.root", "bfragAnalysis/xb_lead_inc"), ("Tuned B-L central (CP5), leading B", options.input + "/xb_CP5BL.root", "bfragAnalysis/xb_lead_B"), ("Tuned B-L central (CP5), if(leading=B)", options.input + "/xb_CP5BL.root", "bfragAnalysis/xb_lead_inc") ], "norm": True, "ratio-range": [0.6, 1.4], "nom_to_density": True, "var_to_density": True },
+
+     { "name": "bFrag_checkBvsInc", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5BLdefault.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 default, leading B", "vars": [("CP5 default, if(leading=B)", options.input + "/xb_CP5BLdefault.root", "bfragAnalysis/xb_lead_inc"), ("Tuned B-L central (CP5), leading B", options.input + "/xb_CP5BL.root", "bfragAnalysis/xb_lead_B"), ("Tuned B-L central (CP5), if(leading=B)", options.input + "/xb_CP5BL.root", "bfragAnalysis/xb_lead_inc") ], "norm": True, "ratio-range": [0.6, 1.4], "nom_to_density": True, "var_to_density": True },
 ]
 
 
@@ -266,16 +266,16 @@ for plot in pTplots:
 
 #### debug: smooth vs. raw weights
 for leg,gr,out in [
-    ("B-L CP5 default to B-L CP5 central", "fragCP5BL_B", "weights_BL_central.pdf"),
-    ("B-L CP5 default to B-L CP5 up", "fragCP5BLup_B", "weights_BL_up.pdf"),
-    ("B-L CP5 default to B-L CP5 down", "fragCP5BLdown_B", "weights_BL_down.pdf"),
-    ("B-L CP5 default to Peterson CP5 central", "fragCP5Peterson_B", "weights_peterson_central.pdf"),
-    ("B-L CP5 default to Peterson CP5 up", "fragCP5Petersonup_B", "weights_peterson_up.pdf"),
-    ("B-L CP5 default to Peterson CP5 down", "fragCP5Petersondown_B", "weights_peterson_down.pdf"),
-    ("B-L CP5 default to B-L CUETP8M2T4 central", "fragCUETP8M2T4BL_B", "weights_BL_cuetp8m2t4_central.pdf"),
-    ("B-L CP5 default to B-L CUETP8M2T4 TOP-18-012 central", "fragCUETP8M2T4BLLHC_B", "weights_BL_cuetp8m2t4_top-18-012_central.pdf"),
-    ("B-L CP5 default to B-L CUETP8M2T4 TOP-18-012 up", "fragCUETP8M2T4BLLHCup_B", "weights_BL_cuetp8m2t4_top-18-012_up.pdf"),
-    ("B-L CP5 default to B-L CUETP8M2T4 TOP-18-012 down", "fragCUETP8M2T4BLLHCdown_B", "weights_BL_cuetp8m2t4_top-18-012_down.pdf"),
+    ("B-L CP5 default to B-L CP5 central", "fragCP5BL", "weights_BL_central.pdf"),
+    ("B-L CP5 default to B-L CP5 up", "fragCP5BLup", "weights_BL_up.pdf"),
+    ("B-L CP5 default to B-L CP5 down", "fragCP5BLdown", "weights_BL_down.pdf"),
+    ("B-L CP5 default to Peterson CP5 central", "fragCP5Peterson", "weights_peterson_central.pdf"),
+    ("B-L CP5 default to Peterson CP5 up", "fragCP5Petersonup", "weights_peterson_up.pdf"),
+    ("B-L CP5 default to Peterson CP5 down", "fragCP5Petersondown", "weights_peterson_down.pdf"),
+    ("B-L CP5 default to B-L CUETP8M2T4 central", "fragCUETP8M2T4BL", "weights_BL_cuetp8m2t4_central.pdf"),
+    ("B-L CP5 default to B-L CUETP8M2T4 TOP-18-012 central", "fragCUETP8M2T4BLLHC", "weights_BL_cuetp8m2t4_top-18-012_central.pdf"),
+    ("B-L CP5 default to B-L CUETP8M2T4 TOP-18-012 up", "fragCUETP8M2T4BLLHCup", "weights_BL_cuetp8m2t4_top-18-012_up.pdf"),
+    ("B-L CP5 default to B-L CUETP8M2T4 TOP-18-012 down", "fragCUETP8M2T4BLLHCdown", "weights_BL_cuetp8m2t4_top-18-012_down.pdf"),
                   ]:
     tf = ROOT.TFile.Open(options.input + "/bfragweights.root")
     notSmooth = tf.Get(gr)
@@ -318,16 +318,16 @@ for leg,gr,out in [
 
 ### debug: smooth in pT bins
 for leg,gr,out in [
-    ("B-L CP5 default to B-L CP5 central", "fragCP5BL_B", "weights_pT_BL_central.pdf"),
-    ("B-L CP5 default to B-L CP5 up", "fragCP5BLup_B", "weights_pT_BL_up.pdf"),
-    ("B-L CP5 default to B-L CP5 down", "fragCP5BLdown_B", "weights_pT_BL_down.pdf"),
-    ("B-L CP5 default to Peterson CP5 central", "fragCP5Peterson_B", "weights_pT_peterson_central.pdf"),
-    ("B-L CP5 default to Peterson CP5 up", "fragCP5Petersonup_B", "weights_pT_peterson_up.pdf"),
-    ("B-L CP5 default to Peterson CP5 down", "fragCP5Petersondown_B", "weights_pT_peterson_down.pdf"),
-    ("B-L CP5 default to B-L CUETP8M2T4 central", "fragCUETP8M2T4BL_B", "weights_pT_BL_cuetp8m2t4_central.pdf"),
-    ("B-L CP5 default to B-L CUETP8M2T4 TOP-18-012 central", "fragCUETP8M2T4BLLHC_B", "weights_pT_BL_cuetp8m2t4_top-18-012_central.pdf"),
-    ("B-L CP5 default to B-L CUETP8M2T4 TOP-18-012 up", "fragCUETP8M2T4BLLHCup_B", "weights_pT__BL_cuetp8m2t4_top-18-012_up.pdf"),
-    ("B-L CP5 default to B-L CUETP8M2T4 TOP-18-012 down", "fragCUETP8M2T4BLLHCdown_B", "weights_pT_BL_cuetp8m2t4_top-18-012_down.pdf"),
+    ("B-L CP5 default to B-L CP5 central", "fragCP5BL", "weights_pT_BL_central.pdf"),
+    ("B-L CP5 default to B-L CP5 up", "fragCP5BLup", "weights_pT_BL_up.pdf"),
+    ("B-L CP5 default to B-L CP5 down", "fragCP5BLdown", "weights_pT_BL_down.pdf"),
+    ("B-L CP5 default to Peterson CP5 central", "fragCP5Peterson", "weights_pT_peterson_central.pdf"),
+    ("B-L CP5 default to Peterson CP5 up", "fragCP5Petersonup", "weights_pT_peterson_up.pdf"),
+    ("B-L CP5 default to Peterson CP5 down", "fragCP5Petersondown", "weights_pT_peterson_down.pdf"),
+    ("B-L CP5 default to B-L CUETP8M2T4 central", "fragCUETP8M2T4BL", "weights_pT_BL_cuetp8m2t4_central.pdf"),
+    ("B-L CP5 default to B-L CUETP8M2T4 TOP-18-012 central", "fragCUETP8M2T4BLLHC", "weights_pT_BL_cuetp8m2t4_top-18-012_central.pdf"),
+    ("B-L CP5 default to B-L CUETP8M2T4 TOP-18-012 up", "fragCUETP8M2T4BLLHCup", "weights_pT__BL_cuetp8m2t4_top-18-012_up.pdf"),
+    ("B-L CP5 default to B-L CUETP8M2T4 TOP-18-012 down", "fragCUETP8M2T4BLLHCdown", "weights_pT_BL_cuetp8m2t4_top-18-012_down.pdf"),
                   ]:
 
     c = ROOT.TCanvas("c", "c")
