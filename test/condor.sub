@@ -1,0 +1,27 @@
+executable            = condor_script.sh
+output                = log/$(ClusterId).$(ProcId).out
+error                 = log/$(ClusterId).$(ProcId).err
+log                   = log/$(ClusterId).log
+initialdir = $(DIR)
+requirements = (OpSysAndVer =?= "CentOS7")
++JobFlavour = "tomorrow"
+
+nevents = 50000
+repeat = 100
+
+initialArgs = $(ProcId) $(initialdir) $ENV(CMSSW_BASE) $(nevents)
+
+queue $(repeat) arguments from (
+$(initialArgs) cp5 BL 0.855 CP5BLdefault
+$(initialArgs) cp5 BL 1.056 CP5BL
+$(initialArgs) cp5 BL 1.252 CP5BLup
+$(initialArgs) cp5 BL 0.8554 CP5BLdown
+$(initialArgs) cp5 P 0.006037 CP5Peterson
+$(initialArgs) cp5 P 0.01006 CP5Petersonup
+$(initialArgs) cp5 P 0.00365 CP5Petersondown
+$(initialArgs) cuep8m2t4 BL 0.855 CUETP8M2T4BLdefault
+$(initialArgs) cuep8m2t4 BL 0.8949 CUETP8M2T4BL
+$(initialArgs) cuep8m2t4 BL 0.843 CUETP8M2T4BLLHC
+$(initialArgs) cuep8m2t4 BL 0.899 CUETP8M2T4BLLHCup
+$(initialArgs) cuep8m2t4 BL 0.787 CUETP8M2T4BLLHCdown
+)
