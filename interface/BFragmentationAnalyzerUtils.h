@@ -10,14 +10,18 @@
 #define IS_NEUTRINO_PDGID(id) ( (abs(id) == 12) || (abs(id) == 14) || (abs(id) == 16) )
 #define IS_CHLEPTON_PDGID(id) ( (abs(id) == 11) || (abs(id) == 13) || (abs(id) == 15) )
 
+#define TAG_SCALE 1e+20
+
 struct JetFragInfo_t
 {
-  float xb;
-  int leadTagId;
+  float xb_lead, xb_subLead;
+  int leadTagId, subLeadTagId;
+  float xb_lead_B, xb_subLead_B;
+  int leadTagId_B, subLeadTagId_B;
   bool hasSemiLepDecay,hasTauSemiLepDecay;
   int nbtags,nctags,ntautags;
 };
 
-JetFragInfo_t analyzeJet(const reco::GenJet &genJet,float tagScale=1.0E+20);
+JetFragInfo_t analyzeJet(const reco::GenJet &genJet,float tagScale=TAG_SCALE);
 
 #endif
