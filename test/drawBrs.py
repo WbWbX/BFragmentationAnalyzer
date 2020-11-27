@@ -74,6 +74,7 @@ def getPythia8Envelope():
     c.Modified()
     c.Update()
     c.SaveAs('${CMSSW_BASE}/src/TopQuarkAnalysis/BFragmentationAnalyzer/data/semilepbr_unc.pdf')
+    c.SaveAs('${CMSSW_BASE}/src/TopQuarkAnalysis/BFragmentationAnalyzer/data/semilepbr_unc.png')
     
 
 def main():
