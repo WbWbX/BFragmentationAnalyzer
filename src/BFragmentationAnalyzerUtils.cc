@@ -14,13 +14,11 @@ JetFragInfo_t analyzeJet(const reco::GenJet &genJet,float tagScale)
   for (size_t ijc=0; ijc <jconst.size(); ijc++) {
       const reco::GenParticle *par=jconst[ijc];
 
-      if (par->status() != 2) continue;
-      
       int absid = abs(par->pdgId());
 
-      // Look for neutrinos or charged leptons in the final state with a B hadron as a parent
+      // Look for neutrinos or charged leptons (status-1 e/mu or status-2 taus) in the final state with a B hadron as a parent
       // to tag semileptonic B decays
-      if (par->status() == 2 && (IS_NEUTRINO_PDGID(absid) || IS_CHLEPTON_PDGID(absid))) {
+      if ((par->status() == 2 || par->status() == 1) && (IS_NEUTRINO_PDGID(absid) || IS_CHLEPTON_PDGID(absid))) {
           const reco::Candidate *leptonMother = par->mother();
           if (!leptonMother) {
               continue;
@@ -34,6 +32,8 @@ JetFragInfo_t analyzeJet(const reco::GenJet &genJet,float tagScale)
         }
       }
 
+      if (par->status() != 2) continue;
+      
       //count number of tags
       if(IS_BHADRON_PDGID(absid)) nbtags++;
       if(IS_CHADRON_PDGID(absid)) nctags++;
