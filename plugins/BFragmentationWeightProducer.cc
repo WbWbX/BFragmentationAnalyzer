@@ -12,6 +12,7 @@
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/StreamID.h"
+#include "FWCore/Utilities/interface/Exception.h"
 #include "DataFormats/Common/interface/Association.h"
 #include "DataFormats/Common/interface/ValueMap.h"
 
@@ -19,6 +20,7 @@
 
 #include "TFile.h"
 #include "TGraph.h"
+#include "TH2.h"
 
 using namespace std;
 
@@ -36,26 +38,53 @@ class BFragmentationWeightProducer : public edm::stream::EDProducer<> {
       virtual void endStream() override;
 
   edm::EDGetTokenT<std::vector<reco::GenJet> > genJetsToken_;
-  const std::vector<std::string> weights_;
-  std::map<std::string, TGraph *> wgtGr_;
+  const std::vector<std::string> br_weights_;
+  const std::vector<std::string> frag_weights_;
+  const std::vector<std::string> frag_weights_vs_pt_;
+  std::map<std::string, TGraph *> brWgtGr_; // BR weights are stored as graphs
+  std::map<std::string, TH2*> fragWgtPtHist_; // frag weights vs. pt are stored as histograms
+  std::map<std::string, TGraph *> fragWgtGr_; // pt-averaged frag weights are stored as graphs
 };
 
 //
 BFragmentationWeightProducer::BFragmentationWeightProducer(const edm::ParameterSet& iConfig):
   genJetsToken_(consumes<std::vector<reco::GenJet> >(iConfig.getParameter<edm::InputTag>("src"))),
-  weights_(iConfig.getParameter<std::vector<std::string>>("weights"))
+  br_weights_(iConfig.getParameter<std::vector<std::string>>("br_weights")),
+  frag_weights_(iConfig.getParameter<std::vector<std::string>>("frag_weights")),
+  frag_weights_vs_pt_(iConfig.getParameter<std::vector<std::string>>("frag_weights_vs_pt"))
 {
   //readout weights from file and declare them for the producer
-  edm::FileInPath fp = iConfig.getParameter<edm::FileInPath>("cfg");
-  TFile *fIn = TFile::Open(fp.fullPath().c_str());
-  for (const auto& wgt: weights_) {
-      produces<edm::ValueMap<float> >(wgt);
-      std::string grName = (wgt.find("frag") != std::string::npos) ? (wgt + "_smooth") : wgt; // use the smoothed fragmentation graphs
-      TGraph *gr = static_cast<TGraph*>(fIn->Get(grName.c_str()));  
-      if (!gr) continue;
-      wgtGr_[wgt] = gr;
-  }
 
+  edm::FileInPath fp = iConfig.getParameter<edm::FileInPath>("br_weight_file");
+  TFile *fIn = TFile::Open(fp.fullPath().c_str());
+  for (const auto& wgt: br_weights_) {
+      produces<edm::ValueMap<float> >(wgt);
+      TGraph *gr = static_cast<TGraph*>(fIn->Get(wgt.c_str()));  
+      if (!gr) throw cms::Exception("ObjectNotFound") << "Could not load object " << wgt << " from " << fp.fullPath() << std::endl;
+      brWgtGr_[wgt] = gr;
+  }
+  fIn->Close();
+
+  fp = iConfig.getParameter<edm::FileInPath>("frag_weight_file");
+  fIn = TFile::Open(fp.fullPath().c_str());
+  for (const auto& wgt: frag_weights_) {
+      produces<edm::ValueMap<float> >(wgt);
+      std::string grName = wgt + "_smooth";
+      TGraph *gr = static_cast<TGraph*>(fIn->Get(grName.c_str()));  
+      if (!gr) throw cms::Exception("ObjectNotFound") << "Could not load object " << grName << " from " << fp.fullPath() << std::endl;
+      fragWgtGr_[wgt] = gr;
+  }
+  fIn->Close();
+  
+  fp = iConfig.getParameter<edm::FileInPath>("frag_weight_vs_pt_file");
+  fIn = TFile::Open(fp.fullPath().c_str());
+  for (const auto& wgt: frag_weights_vs_pt_) {
+      produces<edm::ValueMap<float> >(wgt + "VsPt");
+      std::string histName = wgt + "_smooth";
+      TH2* hist = static_cast<TH2*>(fIn->Get(histName.c_str()));  
+      if (!hist) throw cms::Exception("ObjectNotFound") << "Could not load object " << histName << " from " << fp.fullPath() << std::endl;
+      fragWgtPtHist_[wgt] = hist;
+  }
   fIn->Close();
 }
 
@@ -71,32 +100,47 @@ void BFragmentationWeightProducer::produce(edm::Event& iEvent, const edm::EventS
    edm::Handle<std::vector<reco::GenJet> > genJets;
    iEvent.getByToken(genJetsToken_,genJets);
    std::map< std::string, std::vector<float> > jetWeights;
-   for (const auto& wgt: weights_)
+   for (const auto& wgt: br_weights_)
        jetWeights[wgt] = std::vector<float>();
+   for (const auto& wgt: frag_weights_)
+       jetWeights[wgt] = std::vector<float>();
+   for (const auto& wgt: frag_weights_vs_pt_)
+       jetWeights[wgt + "VsPt"] = std::vector<float>();
 
    for(auto genJet: *genJets) {
        //map the gen particles which are clustered in this jet
        JetFragInfo_t jinfo=analyzeJet(genJet);
        
        //evaluate the weight to an alternative fragmentation model (if a tag id is available)
-       for (const auto& wgt: weights_) {
-           if (wgt.find("frag") == std::string::npos)
-               continue;
-           if (jinfo.leadTagId != 0)
-               jetWeights[wgt].push_back(wgtGr_[wgt]->Eval(jinfo.xb));
+       for (const auto& wgt: frag_weights_) {
+           if (jinfo.leadTagId_B != 0 && jinfo.xb_lead_B <= 1) // always store 1 above xb=1
+               jetWeights[wgt].push_back(fragWgtGr_[wgt]->Eval(jinfo.xb_lead_B));
            else
                jetWeights[wgt].push_back(1.);
        }
+       
+       for (const auto& wgt: frag_weights_vs_pt_) {
+           if (jinfo.leadTagId_B != 0 && jinfo.xb_lead_B <= 1) {
+               TH2* hist = fragWgtPtHist_[wgt];
+               size_t xb_bin = hist->GetXaxis()->FindBin(jinfo.xb_lead_B);
+               size_t pt_bin = hist->GetYaxis()->FindBin(genJet.pt());
+               float weight = hist->GetBinContent(xb_bin, pt_bin);
+               jetWeights[wgt + "VsPt"].push_back(weight);
+           } else {
+               jetWeights[wgt + "VsPt"].push_back(1.);
+           }
+       }
 
-       float semilepbrUp(1.0), semilepbrDown(1.0);
-       int absBid(abs(jinfo.leadTagId));
-       if (absBid == 511 || absBid == 521 || absBid == 531 || absBid == 5122) {
-           int bid(jinfo.hasSemiLepDecay ? absBid : -absBid);
-           semilepbrUp = wgtGr_["semilepbrup"]->Eval(bid);
-           semilepbrDown = wgtGr_["semilepbrdown"]->Eval(bid);
-	   }
-       jetWeights["semilepbrup"].push_back(semilepbrUp);
-       jetWeights["semilepbrdown"].push_back(semilepbrDown);
+
+       for (const auto& wgt: br_weights_) {
+           float weight(1.0);
+           int absBid(abs(jinfo.leadTagId_B));
+           if (absBid == 511 || absBid == 521 || absBid == 531 || absBid == 5122) {
+               int bid(jinfo.hasSemiLepDecay ? absBid : -absBid);
+               weight = brWgtGr_[wgt]->Eval(bid);
+           }
+           jetWeights[wgt].push_back(weight);
+       }
 
        /*
        if(IS_BHADRON_PDGID(absBid))
@@ -117,7 +161,7 @@ void BFragmentationWeightProducer::produce(edm::Event& iEvent, const edm::EventS
        filler.insert(genJets, it.second.begin(), it.second.end());
        filler.fill();
        iEvent.put(std::move(valMap), it.first);
-   } 
+   }
 }
 
 //

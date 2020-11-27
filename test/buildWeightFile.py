@@ -265,8 +265,8 @@ def buildAndWrite2DWeights(inDir, outDir):
     
     xbBins = np.linspace(0, THRES, 300, endpoint=True)
     for tag in TUNES:
-        raw_th2 = ROOT.TH2F("frag_{}".format(tag), "", len(xbBins) - 1, xbBins, len(ptBins) - 1, ptBins)
-        smooth_th2 = ROOT.TH2F("frag_{}_smooth".format(tag), "", len(xbBins) - 1, xbBins, len(ptBins) - 1, ptBins)
+        raw_th2 = ROOT.TH2F("frag{}".format(tag), "", len(xbBins) - 1, xbBins, len(ptBins) - 1, ptBins)
+        smooth_th2 = ROOT.TH2F("frag{}_smooth".format(tag), "", len(xbBins) - 1, xbBins, len(ptBins) - 1, ptBins)
         for i,pt in enumerate(ptBins[:-1]):
             if pt == ptBins[-2]:
                 ptRange = "pT{:.0f}".format(pt)
