@@ -338,12 +338,12 @@ for leg,gr,out in [
     c.SetBottomMargin(0.1)
     c.SetTickx(1)
     
-    l = ROOT.TLegend(0.7, 0.7, 0.9, 0.92)
+    l = ROOT.TLegend(0.72, 0.6, 0.96, 0.92)
     l.SetTextFont(42)
     l.SetFillColor(ROOT.kWhite)
     l.SetFillStyle(0)
     l.SetBorderSize(0)
-    l.SetTextSize(0.022)
+    l.SetTextSize(0.023)
     
     tf = ROOT.TFile.Open(options.input + "/bfragweights.root")
     nominal = tf.Get(gr + "_smooth")
