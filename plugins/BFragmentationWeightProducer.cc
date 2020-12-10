@@ -114,14 +114,14 @@ void BFragmentationWeightProducer::produce(edm::Event& iEvent, const edm::EventS
 
     //evaluate the weight to an alternative fragmentation model (if a tag id is available)
     for (const auto& wgt : frag_weights_) {
-      if (jinfo.leadTagId_B != 0 && jinfo.xb_lead_B <= 1)  // always store 1 above xb=1
+      if (jinfo.leadTagId_B != 0 && jinfo.xb_lead_B < 1)  // always store 1 above xb=1
         jetWeights[wgt].push_back(fragWgtGr_[wgt]->Eval(jinfo.xb_lead_B));
       else
         jetWeights[wgt].push_back(1.);
     }
 
     for (const auto& wgt : frag_weights_vs_pt_) {
-      if (jinfo.leadTagId_B != 0 && jinfo.xb_lead_B <= 1) {
+      if (jinfo.leadTagId_B != 0 && jinfo.xb_lead_B < 1 && genJet.pt() >= 20) {
         TH2* hist = fragWgtPtHist_[wgt];
         size_t xb_bin = hist->GetXaxis()->FindBin(jinfo.xb_lead_B);
         size_t pt_bin = hist->GetYaxis()->FindBin(genJet.pt());
