@@ -97,7 +97,11 @@ def smoothWeightsAkima(ratio, ref, to1AboveThres=False):
     reweight = ref.Clone(ref.GetName() + "_weighted")
     for i in range(1, ref.GetNbinsX() + 1):
         x = reweight.GetXaxis().GetBinCenter(i)
-        weight = smoothGr.Eval(x)
+        if x >= THRES:
+            weight = 1
+        else:
+            weight = smoothGr.Eval(x)
+        # print("x={}, weight={}".format(x, weight))
         reweight.SetBinContent(i, weight * reweight.GetBinContent(i))
     norm = reweight.Integral() / ref.Integral()
     print("Rescaling {} by {}".format(ratio.GetName(), 1./norm))
@@ -121,7 +125,7 @@ def th1SmoothRange(hist, nTimes, xMin, xMax):
     axis.SetRange(oldFirst, oldLast)
 
 def th1RebinRange(hist, nTimes, xMin, xMax, suffix="_rebin"):
-    """ Rebin hist nTimes but only within [xMin,xMax] """
+    """ Rebin hist nTimes but only within [xMin,xMax] (return new histogram) """
 
     origName = hist.GetName()
     axis = hist.GetXaxis()
