@@ -58,9 +58,10 @@ BFragmentationWeightProducer::BFragmentationWeightProducer(const edm::ParameterS
   for (const auto& wgt : br_weights_) {
     produces<edm::ValueMap<float>>(wgt);
     TGraph* gr = static_cast<TGraph*>(fIn->Get(wgt.c_str()));
-    if (!gr)
+    if (!gr) {
       throw cms::Exception("ObjectNotFound")
           << "Could not load object " << wgt << " from " << fp.fullPath() << std::endl;
+    }
     brWgtGr_[wgt] = gr;
   }
   fIn->Close();
@@ -71,9 +72,10 @@ BFragmentationWeightProducer::BFragmentationWeightProducer(const edm::ParameterS
     produces<edm::ValueMap<float>>(wgt);
     std::string grName = wgt + "_smooth";
     TGraph* gr = static_cast<TGraph*>(fIn->Get(grName.c_str()));
-    if (!gr)
+    if (!gr) {
       throw cms::Exception("ObjectNotFound")
           << "Could not load object " << grName << " from " << fp.fullPath() << std::endl;
+    }
     fragWgtGr_[wgt] = gr;
   }
   fIn->Close();
@@ -84,9 +86,10 @@ BFragmentationWeightProducer::BFragmentationWeightProducer(const edm::ParameterS
     produces<edm::ValueMap<float>>(wgt + "VsPt");
     std::string histName = wgt + "_smooth";
     TH2* hist = static_cast<TH2*>(fIn->Get(histName.c_str()));
-    if (!hist)
+    if (!hist) {
       throw cms::Exception("ObjectNotFound")
           << "Could not load object " << histName << " from " << fp.fullPath() << std::endl;
+    }
     fragWgtPtHist_[wgt] = hist;
   }
   fIn->Close();
@@ -101,27 +104,33 @@ void BFragmentationWeightProducer::produce(edm::Event& iEvent, const edm::EventS
   edm::Handle<std::vector<reco::GenJet>> genJets;
   iEvent.getByToken(genJetsToken_, genJets);
   std::map<std::string, std::vector<float>> jetWeights;
-  for (const auto& wgt : br_weights_)
+  for (const auto& wgt: br_weights_) {
     jetWeights[wgt] = std::vector<float>();
-  for (const auto& wgt : frag_weights_)
+  }
+  for (const auto& wgt: frag_weights_) {
     jetWeights[wgt] = std::vector<float>();
-  for (const auto& wgt : frag_weights_vs_pt_)
+  }
+  for (const auto& wgt: frag_weights_vs_pt_) {
     jetWeights[wgt + "VsPt"] = std::vector<float>();
+  }
 
   for (auto genJet : *genJets) {
     //map the gen particles which are clustered in this jet
     JetFragInfo_t jinfo = analyzeJet(genJet);
 
     //evaluate the weight to an alternative fragmentation model (if a tag id is available)
-    for (const auto& wgt : frag_weights_) {
-      if (jinfo.leadTagId_B != 0 && jinfo.xb_lead_B < 1)  // always store 1 above xb=1
+    for (const auto& wgt: frag_weights_) {
+      if (jinfo.leadTagId_B != 0) {
+        // here we can use the bins above xb=1
         jetWeights[wgt].push_back(fragWgtGr_[wgt]->Eval(jinfo.xb_lead_B));
-      else
+      } else {
         jetWeights[wgt].push_back(1.);
+      }
     }
 
-    for (const auto& wgt : frag_weights_vs_pt_) {
-      if (jinfo.leadTagId_B != 0 && jinfo.xb_lead_B < 1 && genJet.pt() >= 20) {
+    for (const auto& wgt: frag_weights_vs_pt_) {
+      // here always use weight=1 if xb>1 or if outside of pT range
+      if (jinfo.leadTagId_B != 0 && jinfo.xb_lead_B < 1 && genJet.pt() >= 30) {
         TH2* hist = fragWgtPtHist_[wgt];
         size_t xb_bin = hist->GetXaxis()->FindBin(jinfo.xb_lead_B);
         size_t pt_bin = hist->GetYaxis()->FindBin(genJet.pt());
@@ -132,7 +141,7 @@ void BFragmentationWeightProducer::produce(edm::Event& iEvent, const edm::EventS
       }
     }
 
-    for (const auto& wgt : br_weights_) {
+    for (const auto& wgt: br_weights_) {
       float weight(1.0);
       int absBid(abs(jinfo.leadTagId_B));
       if (absBid == 511 || absBid == 521 || absBid == 531 || absBid == 5122) {

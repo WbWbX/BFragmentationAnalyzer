@@ -22,6 +22,11 @@ options.register('seed',
 		 VarParsing.multiplicity.singleton,
                  VarParsing.varType.int,
 		 "Random seed for event generation")
+options.register('debug',
+		 'False',
+		 VarParsing.multiplicity.singleton,
+                 VarParsing.varType.string,
+		 "Produce xb histograms where the weights from a previous run are applied")
 options.parseArguments()
 print(options.outputFile)
 
@@ -137,21 +142,34 @@ if options.frag=='BL':
 #pseudo-top config
 from GeneratorInterface.RivetInterface.genParticles2HepMC_cfi import genParticles2HepMC
 process.genParticles2HepMC = genParticles2HepMC.clone( genParticles = cms.InputTag("genParticles") )
+# NOTE: the particleLevel producer applies some cuts on the jets (pt>30, |eta|<2.4)
 process.load("GeneratorInterface.RivetInterface.particleLevel_cfi")
+# include neutrinos in particle-level jets
 process.particleLevel.excludeNeutrinosFromJetClustering = False
 
 #analysis config
 process.TFileService = cms.Service("TFileService",
                                    fileName = cms.string(options.outputFile)
                                    )
-process.load('TopQuarkAnalysis.BFragmentationAnalyzer.bfragAnalysis_cfi')
 
+from TopQuarkAnalysis.BFragmentationAnalyzer.bfragAnalysis_cfi import bfragAnalysis
+if options.debug.lower() == "true":
+    process.load("TopQuarkAnalysis.BFragmentationAnalyzer.bfragWgtProducer_cfi")
+    process.bfragAnalysis = bfragAnalysis.clone(debug=cms.untracked.bool(True))
+else:
+    process.bfragAnalysis = bfragAnalysis
 
 # Path and EndPath definitions
 process.ProductionFilterSequence = cms.Sequence(process.generator)
 process.lhe_step = cms.Path(process.externalLHEProducer)
 process.generation_step = cms.Path(process.pgen)
-process.AnalysisSequence = cms.Path(process.genParticles2HepMC*process.particleLevel*process.bfragAnalysis)
+
+if options.debug.lower() == "true":
+    # debug: also run the weights producer
+    process.AnalysisSequence = cms.Path(process.genParticles2HepMC*process.particleLevel*process.bfragWgtProducer*process.bfragAnalysis)
+else:
+    process.AnalysisSequence = cms.Path(process.genParticles2HepMC*process.particleLevel*process.bfragAnalysis)
+
 process.genfiltersummary_step = cms.EndPath(process.genFilterSummary)
 process.endjob_step = cms.EndPath(process.endOfProcess)
 
