@@ -77,39 +77,28 @@ def smoothWeights(ratio, ref, to1AboveThres=False):
 
     return smoothGr
 
-def smoothWeightsAkima(ratio, ref, to1AboveThres=False):
-    """ Derive the weights based on Akima sub-spline below the threshold, keep original values above (or set to 1 if to1AboveThres is True) """
+def smoothWeightsAkima(ratio, ref, to1AboveThres=False, numPoints=300):
+    """ Derive the weights based on Akima sub-spline below the threshold, keep original ratios above (or set to 1 if to1AboveThres is True) """
 
     x_hist = [ ratio.GetXaxis().GetBinCenter(i) for i in range(1, ratio.GetXaxis().GetNbins() + 1) ]
-    x_hist = [x for x in x_hist if x <= THRES ]
-    x = np.array([0.] + x_hist + [THRES])
-    y_hist = [ ratio.GetBinContent(i) for i in range(1, ratio.GetNbinsX() + 1) if ratio.GetXaxis().GetBinCenter(i) <= THRES ]
+    x_hist_below = [x for x in x_hist if x < THRES ]
+    x = np.array([0.] + x_hist_below + [THRES])
+    y_hist = [ ratio.GetBinContent(i) for i in range(1, ratio.GetNbinsX() + 1) if ratio.GetXaxis().GetBinCenter(i) < THRES ]
     y = np.array([y_hist[0]] + y_hist + [y_hist[-1]])
 
     spline = interpolate.Akima1DInterpolator(x, y)
 
-    x_detail = np.linspace(0, THRES, 300, endpoint=True, dtype=np.float64)
+    x_detail = np.linspace(0., THRES, numPoints)
     y_detail = spline(x_detail)
 
-    smoothGr = ROOT.TGraph(len(x_detail), x_detail, y_detail)
+    x_detail_above = np.linspace(THRES, MAX, numPoints)[1:]
+    if to1AboveThres:
+        y_detail_above = np.ones(x_detail_above.shape)
+    else:
+        y_detail_above = [ ratio.GetBinContent(ratio.GetXaxis().FindBin(xi)) for xi in x_detail_above[:-1] ]
+        y_detail_above.append(y_detail_above[-1])
 
-    # make sure applying the smoothed weights leaves the normalization unchanged
-    reweight = ref.Clone(ref.GetName() + "_weighted")
-    for i in range(1, ref.GetNbinsX() + 1):
-        x = reweight.GetXaxis().GetBinCenter(i)
-        if x >= THRES:
-            weight = 1
-        else:
-            weight = smoothGr.Eval(x)
-        # print("x={}, weight={}".format(x, weight))
-        reweight.SetBinContent(i, weight * reweight.GetBinContent(i))
-    norm = reweight.Integral() / ref.Integral()
-    print("Rescaling {} by {}".format(ratio.GetName(), 1./norm))
-
-    x,y = ROOT.Double(0), ROOT.Double(0)
-    for i in range(smoothGr.GetN()):
-        smoothGr.GetPoint(i, x, y)
-        smoothGr.SetPoint(i, x, y / norm)
+    smoothGr = ROOT.TGraph(len(x_detail) + len(x_detail_above), np.concatenate((x_detail, x_detail_above)), np.concatenate((y_detail, y_detail_above)))
 
     return smoothGr
 
@@ -157,7 +146,16 @@ def toDensity(hist):
     if integral > 0:
         hist.Scale(1./integral)
 
+def mergeBinsAbove(hist, thres, newName):
+    """Merge all bins above `thres` into a single bin, return new histogram"""
+    edges = [ hist.GetXaxis().GetBinLowEdge(i) for i in range(1, hist.GetXaxis().GetNbins() + 2) ]
+    edges = [ e for e in edges if e <= thres ] + [ edges[-1] ]
+    edges = np.array(edges)
+
+    return hist.Rebin(len(edges) - 1, newName, edges)
+
 def loadAllHists(inDir, name):
+    """Return dictionary: tunes->histogram (with name `name`) from all inDir/xb_{TAG}.root files"""
     xb = {}
     for tag in TUNES + [REF]:
         with returnToDirectory():
@@ -190,7 +188,7 @@ def buildAndWriteWeights(inDir, outDir):
         th1SmoothRange(xb[tag], 2, 0., THRES)
         xb[tag].Divide(ref_smoothed)
         # sgr = smoothWeights(xb[tag], xb[REF])
-        sgr = smoothWeightsAkima(xb[tag], xb[REF], to1AboveThres=True) # interpolate using Akima subspline, set weight to 1 above xb=1
+        sgr = smoothWeightsAkima(xb[tag], xb[REF]) # interpolate using Akima subspline, set weight to 1 above xb=1
         sgr.SetName("frag{}_smooth".format(tag))
         sgr.SetLineColor(ROOT.kRed)
         sgr.Write()
@@ -205,7 +203,9 @@ def buildAndWrite2DWeights(inDir, outDir):
     ptBins = [ xb[REF].GetYaxis().GetBinLowEdge(i) for i in range(1, xb[REF].GetYaxis().GetNbins() + 2) ]
     ptBins = np.array(ptBins)
 
+    # extract all the 1D xb slices from the 2D xb/pT hists
     xb_split = {}
+    pt_proj = {} # pT projections for debugging
     for tag,hist in xb.items():
         hists = {}
         yaxis = hist.GetYaxis()
@@ -226,10 +226,19 @@ def buildAndWrite2DWeights(inDir, outDir):
         hists["pT200To350"] = th1RebinRange(hists["pT200To350"], 3, 0., THRES, suffix="")
         hists["pT350To500"] = th1RebinRange(hists["pT350To500"], 4, 0., THRES, suffix="")
         hists["pT500"] = th1RebinRange(hists["pT500"], 5, 0., THRES, suffix="")
-        for proj in hists.values():
+        for pt in hists.keys():
+            proj = hists[pt]
+            name = proj.GetName()
+            proj.SetName(name + "_beforeMerge")
+            # keep only 1 bin above 1 (before normalizing into a pdf!!)
+            proj = mergeBinsAbove(proj, THRES, name)
+            # transform count histograms into p.d.f's
             toDensity(proj)
             proj.Write()
+            hists[pt] = proj
         xb_split[tag] = hists
+
+        hist.ProjectionY("pt_" + tag, 0, -1, "e").Write()
 
     refs_smoothed = { ptRange: xb_split[REF][ptRange].Clone(xb_split[REF][ptRange].GetName() + "_smooth") for ptRange in xb_split[REF] }
     for hist in refs_smoothed.values():
@@ -257,16 +266,17 @@ def buildAndWrite2DWeights(inDir, outDir):
             raw_sgr.SetName("frag{}_{}_rawSmooth".format(tag, ptRange)) # "rawSmooth" = only histogram smoothing, no spline
             raw_sgr.SetLineColor(ROOT.kGreen)
             raw_sgr.Write()
-            sgr = smoothWeightsAkima(hist, ref_smooth, to1AboveThres=True) # interpolate using Akima subspline, set weight to 1 above xb=1
+            sgr = smoothWeightsAkima(hist, ref_smooth) # interpolate using Akima subspline
             sgr.SetName("frag{}_{}_smooth".format(tag, ptRange))
             sgr.SetLineColor(ROOT.kRed)
-            sgr.Write()
+            sgr.Write() # save intermediate graphs for debugging
             smooth_graphs[tag][ptRange] = sgr
 
     fOut.Close()
 
     fOut = ROOT.TFile.Open(os.path.join(outDir, "bfragweights_vs_pt.root"), 'recreate')
-    
+
+    # create TH2's used to apply the weights
     xbBins = np.linspace(0, THRES, 300, endpoint=True)
     for tag in TUNES:
         raw_th2 = ROOT.TH2F("frag{}".format(tag), "", len(xbBins) - 1, xbBins, len(ptBins) - 1, ptBins)
@@ -276,9 +286,12 @@ def buildAndWrite2DWeights(inDir, outDir):
                 ptRange = "pT{:.0f}".format(pt)
             else:
                 ptRange = "pT{:.0f}To{:.0f}".format(pt, ptBins[i+1])
-            for j,xb in enumerate(xbBins):
-                raw_th2.SetBinContent(j + 1, i + 1, raw_graphs[tag][ptRange].Eval(xb))
-                smooth_th2.SetBinContent(j + 1, i + 1, smooth_graphs[tag][ptRange].Eval(xb))
+            raw_gr = raw_graphs[tag][ptRange]
+            smooth_gr = smooth_graphs[tag][ptRange]
+            for j in range(len(xbBins) - 1):
+                raw_th2.SetBinContent(j + 1, i + 1, (raw_gr.Eval(xbBins[j]) + raw_gr.Eval(xbBins[j+1]))/2.)
+                smooth_th2.SetBinContent(j + 1, i + 1, (smooth_gr.Eval(xbBins[j]) + smooth_gr.Eval(xbBins[j+1]))/2.)
+
         raw_th2.Write()
         smooth_th2.Write()
 
@@ -290,6 +303,9 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--output', default=os.path.join(os.getenv("CMSSW_BASE"), "src/TopQuarkAnalysis/BFragmentationAnalyzer/data/"), help='Output folder')
     args = parser.parse_args()
 
+    if not os.path.isdir(args.output):
+        os.mkdir(args.output)
+
     buildAndWriteWeights(args.input, args.output)
     buildAndWrite2DWeights(args.input, args.output)
-    print('Fragmentation been saved to {}'.format(args.output))
+    print('Fragmentation weights saved to {}'.format(args.output))
