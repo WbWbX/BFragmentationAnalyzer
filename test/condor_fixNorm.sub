@@ -1,0 +1,16 @@
+executable            = condor_script.sh
+output                = log/$(ClusterId).$(ProcId).out
+error                 = log/$(ClusterId).$(ProcId).err
+log                   = log/$(ClusterId).log
+initialdir = $(DIR)
+requirements = (OpSysAndVer =?= "CentOS7")
++JobFlavour = "tomorrow"
+
+nevents = 50000
+repeat = 100
+
+initialArgs = $(ProcId) $(initialdir) $ENV(CMSSW_BASE) $(nevents)
+
+queue $(repeat) arguments from (
+$(initialArgs) cp5 BL 0.855 CP5BLdefault True
+)

@@ -12,7 +12,7 @@ repeat = 100
 initialArgs = $(ProcId) $(initialdir) $ENV(CMSSW_BASE) $(nevents)
 
 queue $(repeat) arguments from (
-$(initialArgs) cp5 BL 0.855 CP5BLdefault
+$(initialArgs) cp5 BL 0.855 CP5BLdefault True
 $(initialArgs) cp5 BL 1.056 CP5BL
 $(initialArgs) cp5 BL 1.252 CP5BLup
 $(initialArgs) cp5 BL 0.8554 CP5BLdown
