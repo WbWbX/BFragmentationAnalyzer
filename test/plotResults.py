@@ -30,7 +30,7 @@ colors = [
     "#fa824c"]
 nominal_color = ROOT.TColor.GetColor('#FFB03B')
 
-def drawVariations(name, nominal, variations, title, output, logy=False, nominalName=None, norm=False, ratio_range=None, smooth=0, nom_to_density=False, var_to_density=False):
+def drawVariations(name, nominal, variations, title, output, logy=False, nominalName=None, norm=False, ratio_range=None, x_range=None, smooth=0, nom_to_density=False, var_to_density=False, leg_pos="l", ratio_style="hist L"):
     print("Doing {name}, {title}".format(name=name, title=title))
 
     c = ROOT.TCanvas("c", "c")
@@ -66,6 +66,8 @@ def drawVariations(name, nominal, variations, title, output, logy=False, nominal
         th1SmoothRange(nominal, smooth, 0., 1.)
     if norm:
         nominal.Scale(1./nominal.Integral())
+    if x_range:
+        nominal.GetXaxis().SetRangeUser(x_range[0], x_range[1])
     nominal.Draw("hist")
 
     for i, (v, h) in enumerate(variations):
@@ -97,8 +99,6 @@ def drawVariations(name, nominal, variations, title, output, logy=False, nominal
     for r in ratios:
         r.Divide(nominal)
 
-    ratio_style = "hist L"
-
     ratios[0].GetXaxis().SetLabelSize(0.02 / 0.333)
     ratios[0].GetXaxis().SetTitleSize(0.03 / 0.333)
     ratios[0].GetXaxis().SetLabelOffset(0.05)
@@ -110,6 +110,8 @@ def drawVariations(name, nominal, variations, title, output, logy=False, nominal
     ratios[0].GetYaxis().SetTitle("")
     ratios[0].GetYaxis().SetNdivisions(502, True)
     ratios[0].GetYaxis().SetRangeUser(0.5, 1.5)
+    if x_range:
+        ratios[0].GetXaxis().SetRangeUser(x_range[0], x_range[1])
 
     ratios[0].Draw(ratio_style)
 
@@ -137,7 +139,12 @@ def drawVariations(name, nominal, variations, title, output, logy=False, nominal
     ratios[0].GetYaxis().SetTitle('Ratio')
 
     c.cd()
-    l = ROOT.TLegend(0.2, 0.7, 0.5, 0.92)
+    if leg_pos == "l":
+        l = ROOT.TLegend(0.2, 0.7, 0.5, 0.92)
+    elif leg_pos == "r":
+        l = ROOT.TLegend(0.65, 0.7, 0.95, 0.92)
+    else:
+        l = ROOT.TLegend(*leg_pos)
     l.SetTextFont(42)
     l.SetFillColor(ROOT.kWhite)
     l.SetFillStyle(0)
@@ -180,6 +187,13 @@ plotCfg = [
     { "name": "bFrag_top-18-012", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5BLdefault.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 default B-L", "vars": [("CUETP8M2T4 B-L TOP-18-012 central", options.input + "/xb_CUETP8M2T4BLLHC.root", "bfragAnalysis/xb_lead_B"), ("CUETP8M2T4 B-L TOP-18-012 up", options.input + "/xb_CUETP8M2T4BLLHCup.root", "bfragAnalysis/xb_lead_B"), ("CUETP8M2T4 B-L TOP-18-012 down", options.input + "/xb_CUETP8M2T4BLLHCdown.root", "bfragAnalysis/xb_lead_B") ], "norm": True, "ratio-range": [0.7, 1.5], "nom_to_density": True, "var_to_density": True },
 
      { "name": "bFrag_checkBvsInc", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5BLdefault.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 default, leading B", "vars": [("CP5 default, if(leading=B)", options.input + "/xb_CP5BLdefault.root", "bfragAnalysis/xb_lead_inc"), ("Tuned B-L central (CP5), leading B", options.input + "/xb_CP5BL.root", "bfragAnalysis/xb_lead_B"), ("Tuned B-L central (CP5), if(leading=B)", options.input + "/xb_CP5BL.root", "bfragAnalysis/xb_lead_inc") ], "norm": True, "ratio-range": [0.6, 1.4], "nom_to_density": True, "var_to_density": True },
+     
+    { "name": "bFrag_debug_CP5BL", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5BL.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 BL central", "vars": [("CP5 BL default to CP5 BL central", options.input + "/xb_CP5BLdefault_debug.root", "bfragAnalysis/debug_xb_lead_B_fragCP5BL") ], "ratio-range": [0.6, 1.4], "ratio-style": "histE0" },
+    { "name": "bFrag_debug_CP5Peterson", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5Peterson.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 Peterson central", "vars": [("CP5 BL default to CP5 Peterson central", options.input + "/xb_CP5BLdefault_debug.root", "bfragAnalysis/debug_xb_lead_B_fragCP5Peterson") ], "ratio-range": [0.6, 1.4], "ratio-style": "histE0" },
+
+    { "name": "pt_debug_CP5BL", "title": "p_{T}(jet)", "nominal": (options.input + "/bfragweights_vs_pt_debug.root", "pt_CP5BLdefault"), "nominalName": "CP5 B-L default", "vars": [(leg, options.input + "/bfragweights_vs_pt_debug.root" , hist) for (leg, hist) in zip(["CP5 B-L central", "CP5 B-L up", "CP5 B-L down"], ["pt_CP5BL", "pt_CP5BLup", "pt_CP5BLdown"]) ], "ratio-range": [0.98, 1.02], "norm": True, "x-range": [20, 500], "leg-pos": "r", "ratio-style": "histE0" },
+    { "name": "pt_debug_Peterson", "title": "p_{T}(jet)", "nominal": (options.input + "/bfragweights_vs_pt_debug.root", "pt_CP5BLdefault"), "nominalName": "CP5 B-L default", "vars": [(leg, options.input + "/bfragweights_vs_pt_debug.root" , hist) for (leg, hist) in zip(["CP5 Peterson central", "CP5 Peterson up", "CP5 Peterson down"], ["pt_CP5Peterson", "pt_CP5Petersonup", "pt_CP5Petersondown"]) ], "ratio-range": [0.98, 1.02], "norm": True, "x-range": [20, 500], "leg-pos": "r", "ratio-style": "histE0" },
+    { "name": "pt_debug_CUETP", "title": "p_{T}(jet)", "nominal": (options.input + "/bfragweights_vs_pt_debug.root", "pt_CP5BLdefault"), "nominalName": "CP5 B-L default", "vars": [(leg, options.input + "/bfragweights_vs_pt_debug.root" , hist) for (leg, hist) in zip(["CUETP8M2T4 B-L default", "CUETP8M2T4 B-L LHC central", "CUETP8M2T4 B-L LHC up", "CUETP8M2T4 B-L LHC down"], ["pt_CUETP8M2T4BL", "pt_CUETP8M2T4BLLHC", "pt_CUETP8M2T4BLLHCup","pt_CUETP8M2T4BLLHCdown"]) ], "ratio-range": [0.97, 1.03], "norm": True, "x-range": [20, 500], "leg-pos": "r", "ratio-style": "histE0" },
 ]
 
 
@@ -205,7 +219,7 @@ for plot in plotCfg:
             raise e
         tf.Close()
 
-    drawVariations(plot["name"], nominal, variations, plot["title"], options.output, logy=plot.get("log", False), nominalName=plot.get("nominalName", None), norm=plot.get("norm", False), ratio_range=plot.get("ratio-range", None), smooth=plot.get("smooth", 0), nom_to_density=plot.get("nom_to_density", False), var_to_density=plot.get("var_to_density", False))
+    drawVariations(plot["name"], nominal, variations, plot["title"], options.output, logy=plot.get("log", False), nominalName=plot.get("nominalName", None), norm=plot.get("norm", False), ratio_range=plot.get("ratio-range", None), x_range=plot.get("x-range", None), smooth=plot.get("smooth", 0), nom_to_density=plot.get("nom_to_density", False), var_to_density=plot.get("var_to_density", False), ratio_style=plot.get("ratio-style", "histL"), leg_pos=plot.get("leg-pos", "l"))
 
 
 #### pT plots
@@ -215,13 +229,13 @@ pTranges = ["pT{}To{}".format(pTbins[i], pTbins[i+1]) for i in range(len(pTbins)
 pTranges.append("pT{}".format(pTbins[-1]))
 
 pTplots = [
-    { "name": "bFrag_pT_CP5BLdefault", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5BLdefault.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 default, averaged", "vars": [("CP5 default, {pT}".format(pT=pT), options.input + "/bfragweights_vs_pt_debug.root", "xb_CP5BLdefault_{pT}".format(pT=pT)) for pT in pTranges], "norm": True, "ratio-range": [0, 5.] },
-    { "name": "bFrag_pT_CP5BL", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5BL.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 default, averaged", "vars": [("CP5 nominal, {pT}".format(pT=pT), options.input + "/bfragweights_vs_pt_debug.root", "xb_CP5BL_{pT}".format(pT=pT)) for pT in pTranges], "norm": True, "ratio-range": [0, 5.] },
-    { "name": "bFrag_pT_CP5BLup", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5BLup.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 up, averaged", "vars": [("CP5 up, {pT}".format(pT=pT), options.input + "/bfragweights_vs_pt_debug.root", "xb_CP5BLup_{pT}".format(pT=pT)) for pT in pTranges], "norm": True, "ratio-range": [0, 5.] },
-    { "name": "bFrag_pT_CP5BLdown", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5BLdown.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 down, averaged", "vars": [("CP5 down, {pT}".format(pT=pT), options.input + "/bfragweights_vs_pt_debug.root", "xb_CP5BLdown_{pT}".format(pT=pT)) for pT in pTranges], "norm": True, "ratio-range": [0, 5.] },
-    { "name": "bFrag_pT_CP5Peterson", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5Peterson.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 Peterson, averaged", "vars": [("CP5 Peterson, {pT}".format(pT=pT), options.input + "/bfragweights_vs_pt_debug.root", "xb_CP5Peterson_{pT}".format(pT=pT)) for pT in pTranges], "norm": True, "ratio-range": [0, 5.] },
-    { "name": "bFrag_pT_CP5Petersonup", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5Petersonup.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 Peterson up, averaged", "vars": [("CP5 Peterson up, {pT}".format(pT=pT), options.input + "/bfragweights_vs_pt_debug.root", "xb_CP5Petersonup_{pT}".format(pT=pT)) for pT in pTranges], "norm": True, "ratio-range": [0, 5.] },
-    { "name": "bFrag_pT_CP5Petersondown", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5Petersondown.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 Peterson down, averaged", "vars": [("CP5 Peterson down, {pT}".format(pT=pT), options.input + "/bfragweights_vs_pt_debug.root", "xb_CP5Petersondown_{pT}".format(pT=pT)) for pT in pTranges], "norm": True, "ratio-range": [0, 5.] },
+    { "name": "bFrag_pT_CP5BLdefault", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5BLdefault.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 default, averaged", "vars": [("CP5 default, {pT}".format(pT=pT), options.input + "/bfragweights_vs_pt_debug.root", "xb_CP5BLdefault_{pT}".format(pT=pT)) for pT in pTranges], "norm": True, "ratio-range": [0, 5.], "ratio-style": "hist" },
+    { "name": "bFrag_pT_CP5BL", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5BL.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 default, averaged", "vars": [("CP5 nominal, {pT}".format(pT=pT), options.input + "/bfragweights_vs_pt_debug.root", "xb_CP5BL_{pT}".format(pT=pT)) for pT in pTranges], "norm": True, "ratio-range": [0, 5.], "ratio-style": "hist" },
+    { "name": "bFrag_pT_CP5BLup", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5BLup.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 up, averaged", "vars": [("CP5 up, {pT}".format(pT=pT), options.input + "/bfragweights_vs_pt_debug.root", "xb_CP5BLup_{pT}".format(pT=pT)) for pT in pTranges], "norm": True, "ratio-range": [0, 5.], "ratio-style": "hist" },
+    { "name": "bFrag_pT_CP5BLdown", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5BLdown.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 down, averaged", "vars": [("CP5 down, {pT}".format(pT=pT), options.input + "/bfragweights_vs_pt_debug.root", "xb_CP5BLdown_{pT}".format(pT=pT)) for pT in pTranges], "norm": True, "ratio-range": [0, 5.], "ratio-style": "hist" },
+    { "name": "bFrag_pT_CP5Peterson", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5Peterson.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 Peterson, averaged", "vars": [("CP5 Peterson, {pT}".format(pT=pT), options.input + "/bfragweights_vs_pt_debug.root", "xb_CP5Peterson_{pT}".format(pT=pT)) for pT in pTranges], "norm": True, "ratio-range": [0, 5.], "ratio-style": "hist" },
+    { "name": "bFrag_pT_CP5Petersonup", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5Petersonup.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 Peterson up, averaged", "vars": [("CP5 Peterson up, {pT}".format(pT=pT), options.input + "/bfragweights_vs_pt_debug.root", "xb_CP5Petersonup_{pT}".format(pT=pT)) for pT in pTranges], "norm": True, "ratio-range": [0, 5.], "ratio-style": "hist" },
+    { "name": "bFrag_pT_CP5Petersondown", "title": "x_{b} = p_{T}(B)/p_{T}(jet)", "nominal": (options.input + "/xb_CP5Petersondown.root", "bfragAnalysis/xb_lead_B"), "nominalName": "CP5 Peterson down, averaged", "vars": [("CP5 Peterson down, {pT}".format(pT=pT), options.input + "/bfragweights_vs_pt_debug.root", "xb_CP5Petersondown_{pT}".format(pT=pT)) for pT in pTranges], "norm": True, "ratio-range": [0, 5.], "ratio-style": "hist" },
 ]
 
 for plot in pTplots:
@@ -259,7 +273,7 @@ for plot in pTplots:
         variations.append((var[0], hist_rebin))
         tf.Close()
 
-    drawVariations(plot["name"], nominal, variations, plot["title"], options.output, logy=plot.get("log", False), nominalName=plot.get("nominalName", None), norm=plot.get("norm", False), ratio_range=plot.get("ratio-range", None), smooth=plot.get("smooth", 0), nom_to_density=plot.get("nom_to_density", False), var_to_density=plot.get("var_to_density", False))
+    drawVariations(plot["name"], nominal, variations, plot["title"], options.output, logy=plot.get("log", False), nominalName=plot.get("nominalName", None), norm=plot.get("norm", False), ratio_range=plot.get("ratio-range", None), smooth=plot.get("smooth", 0), nom_to_density=plot.get("nom_to_density", False), var_to_density=plot.get("var_to_density", False), ratio_style=plot.get("ratio-style", "histL"), leg_pos=plot.get("leg-pos", "l"))
 
 
 
@@ -326,7 +340,7 @@ for leg,gr,out in [
     ("B-L CP5 default to Peterson CP5 down", "fragCP5Petersondown", "weights_pT_peterson_down.pdf"),
     ("B-L CP5 default to B-L CUETP8M2T4 central", "fragCUETP8M2T4BL", "weights_pT_BL_cuetp8m2t4_central.pdf"),
     ("B-L CP5 default to B-L CUETP8M2T4 TOP-18-012 central", "fragCUETP8M2T4BLLHC", "weights_pT_BL_cuetp8m2t4_top-18-012_central.pdf"),
-    ("B-L CP5 default to B-L CUETP8M2T4 TOP-18-012 up", "fragCUETP8M2T4BLLHCup", "weights_pT__BL_cuetp8m2t4_top-18-012_up.pdf"),
+    ("B-L CP5 default to B-L CUETP8M2T4 TOP-18-012 up", "fragCUETP8M2T4BLLHCup", "weights_pT_BL_cuetp8m2t4_top-18-012_up.pdf"),
     ("B-L CP5 default to B-L CUETP8M2T4 TOP-18-012 down", "fragCUETP8M2T4BLLHCdown", "weights_pT_BL_cuetp8m2t4_top-18-012_down.pdf"),
                   ]:
 
