@@ -191,3 +191,9 @@ mkdir results_fixNorm
 ./fixWeightNormalization.py -i results -d condor_normWeights/xb_CP5BLdefault.root -o results_fixNorm/
 cp results_fixNorm/b*weights*.root ../data/
 ```
+
+Validation plots can be produced using:
+```
+mkdir plots_fixNorm
+./plotResults.py  -i results_fixNorm -o plots_fixNorm
+```
