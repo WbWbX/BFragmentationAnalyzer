@@ -36,7 +36,7 @@ The analyzer can be run on the output of the ParticleLevelProducer.
 The example below generates, some Pohweg TT events, showers them with Pythia8 setting a specific tune and Bowler-Lund parameter,
 and produces histograms with the distributions of xb and other quantities.
 ```
-cmsRun test/runBFragmentationAnalyzer_cfg.py frag=BL param=0.855 tune=CP5 outputFile=xb_central.root
+cmsRun test/runBFragmentationAnalyzer_cfg.py frag=BL param=0.855 tune=CP5 maxEvents=1000 outputFile=xb_default.root
 ```
 The producer can also be run on the output of the ParticleLevelProducer.
 The example below shows how to do it starting from a MiniAOD file.
@@ -59,7 +59,7 @@ Step-by-step instructions to readout one of the weights in your analyzer.
 
 1. declare the tokens to access genJets and weights in your class
 ```
-   edm::EDGetTokenT<std::vector<reco::GenJet>  > genJetsToken_;
+   edm::EDGetTokenT<std::vector<reco::GenJet> > genJetsToken_;
    edm::EDGetTokenT<edm::ValueMap<float> > fragToken_;
 ```
 2. in the constructor declare what the tokens consume
@@ -70,25 +70,26 @@ Step-by-step instructions to readout one of the weights in your analyzer.
 3. in the analyzer method get the genJets, the weights and **loop over the jets** to analyse them, and **take the product of the jet weights as event weight**
 ```
   edm::Handle<std::vector<reco::GenJet> > genJets;
-  iEvent.getByToken(genJetsToken_,genJets);
+  iEvent.getByToken(genJetsToken_, genJets);
   edm::Handle<edm::ValueMap<float> > frag;
   iEvent.getByToken(fragToken_, frag);
-  for(auto genJet=genJets->begin(); genJet!=genJets->end(); ++genJet)
-    {
-        edm::Ref<std::vector<reco::GenJet> > genJetRef(genJets,genJet-genJets->begin());
+  double weight = 1.;
+  for (auto genJet=genJets->begin(); genJet!=genJets->end(); ++genJet) {
+    edm::Ref<std::vector<reco::GenJet> > genJetRef(genJets, genJet-genJets->begin());
+    weight *= (*frag)[genJetRef];
 	cout << "pt=" << genJet->pt() << " id=" << genJet->pdgId() << " fragWeight=" << (*frag)[genJetRef] << endl;
 	...
-    }
+  }
 ```
 4. Add the particleLevel and weight producer snippets to your cfg
 ```
     process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
     process.mergedGenParticles = cms.EDProducer("MergedGenParticleProducer",
 						inputPruned = cms.InputTag("prunedGenParticles"),
-        					inputPacked = cms.InputTag("packedGenParticles"),
+        				inputPacked = cms.InputTag("packedGenParticles"),
     )
     from GeneratorInterface.RivetInterface.genParticles2HepMC_cfi import genParticles2HepMC
-    process.genParticles2HepMC = genParticles2HepMC.clone( genParticles = cms.InputTag("mergedGenParticles") )
+    process.genParticles2HepMC = genParticles2HepMC.clone(genParticles = cms.InputTag("mergedGenParticles"))
     process.load("GeneratorInterface.RivetInterface.particleLevel_cfi")
     process.particleLevel.excludeNeutrinosFromJetClustering = False
     process.load('TopQuarkAnalysis.BFragmentationAnalyzer.bfragWgtProducer_cfi')
