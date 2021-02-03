@@ -119,7 +119,7 @@ All these weights are obtained using an "averaged" analysis that doesn't take in
 pt-dependent weights are also available, which result in somewhat reduced adverse effects on the normalization and kinematics from
 the reweighting: just append `VsPt` to the names above to access those.
 
-The fragmenation weights are based on the tuning to LEP/SLD data described in https://gitlab.cern.ch/cms-gen/Tuning/merge_requests/2,
+The fragmenation weights are based on the tuning to LEP/SLD data described in https://gitlab.cern.ch/cms-gen/Tuning/merge_requests/20,
 as well as the results from TOP-18-012.
 
 B hadron semileptonic branching ratio uncertainty weights are named `semilepbrup` and `semilepbrdown`. No pt-dependent weights
