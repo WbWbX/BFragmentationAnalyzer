@@ -109,6 +109,9 @@ The weights have been computed to reweight the default fragmenation scenario in 
 * `fragCP5Peterson`: CP5, Peterson, tuned to LEP + up/down uncertainties
 * `fragCP5Petersondown`
 * `fragCP5Petersonup`
+
+The following weights have also been computed but are not produced by default as their use is not recommended:
+
 * `fragCUETP8M2T4BL`: CUETP8M2T4, Bowler-Lund, tuned to LEP (assuming Monash)
 * `fragCUETP8M2T4BLdefault`: CUETP8M2T4, Bowler-Lund, Pythia8 default
 * `fragCUETP8M2T4BLLHC`: CUETP8M2T4, Bowler-Lund, TOP-18-012 result + up/down uncertainties
@@ -116,11 +119,13 @@ The weights have been computed to reweight the default fragmenation scenario in 
 * `fragCUETP8M2T4BLLHCup`
 
 All these weights are obtained using an "averaged" analysis that doesn't take into account the dependence on the jet pt.
-pt-dependent weights are also available, which result in somewhat reduced adverse effects on the normalization and kinematics from
+To account for that, genJet pt-dependent weights are also available, 
+which result in somewhat reduced adverse effects on the normalization and kinematics from
 the reweighting: just append `VsPt` to the names above to access those.
+Use of the latter is recommended and pt-averaged weights are not produced by default.
 
-The fragmenation weights are based on the tuning to LEP/SLD data described in https://gitlab.cern.ch/cms-gen/Tuning/merge_requests/20,
-as well as the results from TOP-18-012.
+The fragmentation weights are either based on the tuning to LEP/SLD data described in https://gitlab.cern.ch/cms-gen/Tuning/merge_requests/20,
+or on the results from TOP-18-012 (with the old CUETP8M2T4 tune however).
 
 B hadron semileptonic branching ratio uncertainty weights are named `semilepbrup` and `semilepbrdown`. No pt-dependent weights
 are necessary (or available) for those.
@@ -144,6 +149,17 @@ and the envelope assigned to cover the uncertainties and differences in the BRs.
 The envelopes derived from the figure above are used to re-scale the inclusive branching ratios
 (taus included) and derive the weights to apply to semi-leptonically or non-semi-leptonically
 decaying B hadrons.
+
+## Important: removing reweighting bias
+
+Applying the weights is observed to bias the normalization and shape of distributions (much more than
+what is expected from genuine changes in the b fragmentation).
+This effect arises because the parameterization of the weights as a function of xb and pt is too crude to account
+for all possible effects, and because weights are derived and computed separately for each b jet, but combined into an overall weight
+that neglects correlations between the jets. This bias should be removed by the analyzers using sample-dependent corrections
+computed as a function of gen-level quantities (e.g. the number of gen-level b jets), separately for each
+set of weights. Some examples of these effects and of the corrections are shown in
+[these slides](https://indico.cern.ch/event/1004752/contributions/4222610/attachments/2186283/3694054/210208_bFragmentation.pdf).
 
 # Expert notes
 
@@ -178,13 +194,13 @@ The `buildBRweights.py` however also checks that the procedure used to "tag" the
 hardcoded in Pythia, based on those results.
 
 The smoothing procedure is observed to slightly bias the overall normalization (average value) of the weights. To (partially) correct this,
-a second condor job can be launched that will only generate the nominal scenario but apply all the previously obtained weights (which should be placed
+a second set of condor jobs can be launched that will only generate the nominal scenario but apply all the previously obtained weights (which should have been placed
 in the `data` folder as described above).
 From the resulting histograms, the normalization effect can be measured and removed:
 ```
 ./condor_submit.sh condor_fixNorm condor_fixNorm.sub
 ```
-Then, run
+When done, run
 ```
 ./merge_output.sh condor_fixNorm
 mkdir results_fixNorm
