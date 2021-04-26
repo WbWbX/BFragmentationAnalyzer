@@ -12,7 +12,23 @@ options.register('param',
 		 VarParsing.multiplicity.singleton,
                  VarParsing.varType.float,
 		 "StringZ:rFactB (BL) or StringZ:epsilonB (P)")
+options.register('tune', 
+		 'CP5', 
+		 VarParsing.multiplicity.singleton,
+                 VarParsing.varType.string,
+                 "Tune to use: CP5, CUETP8M1, CUETP8M2T4")
+options.register('seed', 
+		 123456,
+		 VarParsing.multiplicity.singleton,
+                 VarParsing.varType.int,
+		 "Random seed for event generation")
+options.register('debug',
+		 'False',
+		 VarParsing.multiplicity.singleton,
+                 VarParsing.varType.string,
+		 "Produce xb histograms where the weights from a previous run are applied")
 options.parseArguments()
+print(options.outputFile)
 
 process = cms.Process('GEN')
 
@@ -26,7 +42,7 @@ process.load('SimGeneral.MixingModule.mixNoPU_cfi')
 process.load('Configuration.StandardSequences.GeometryRecoDB_cff')
 process.load('Configuration.StandardSequences.MagneticField_38T_cff')
 process.load('Configuration.StandardSequences.Generator_cff')
-process.load('IOMC.EventVertexGenerators.VtxSmearedNominalCollision2015_cfi')
+process.load('IOMC.EventVertexGenerators.VtxSmearedRealistic25ns13TeV2016Collision_cfi')
 process.load('GeneratorInterface.Core.genFilterSummary_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
@@ -35,74 +51,87 @@ process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(options.maxEvents)
 )
 
-# Input source
-process.source = cms.Source("PoolSource",
-    dropDescendantsOfDroppedBranches = cms.untracked.bool(False),
-    fileNames = cms.untracked.vstring( 
-        '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/E0E60B0A-EFD9-E411-944B-002590494C44.root',
-        '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/E216B380-EFD9-E411-A286-003048FEC15C.root',
-        '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/E41672D8-EFD9-E411-96A4-02163E00F2F9.root',
-        '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/E41DFBBB-EFD9-E411-B7E3-02163E00F319.root',
-        '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/E4F6FEEE-EED9-E411-ABA1-02163E00F4EF.root',
-        '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/E612966B-EFD9-E411-A4DB-02163E00EAD0.root',
-        '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/E85BB4DA-EED9-E411-8FE2-02163E00E9BC.root',
-        '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/ECA3C5EB-EED9-E411-81A7-02163E00E838.root',
-        '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/EE20F46A-EFD9-E411-A1AF-02163E00E65E.root',
-        '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/EE6DBD4A-EFD9-E411-BEAA-02163E00EB31.root',
-        '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/F2BFB88A-EFD9-E411-9FF2-02163E012EA4.root',
-        '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/F632D740-EFD9-E411-BA6B-02163E00EB84.root',
-        '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/F64713DB-EFD9-E411-B6B7-02163E00E684.root',
-        '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/F88F27EB-EFD9-E411-A4B2-02163E00E6C5.root',
-        '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/F8E3A9AB-EFD9-E411-9266-002590494E94.root',
-        '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/FA3B9AE8-EFD9-E411-9BA3-0025904B1FB8.root',
-        '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/FAD9634A-EFD9-E411-AF00-02163E00EAC0.root',
-        '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/FCACD25B-EFD9-E411-B47F-02163E00EB06.root',
-        '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/FE353FDD-EED9-E411-9A3A-02163E00E7F8.root',
-        '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/FEAE2677-EFD9-E411-B1C4-02163E00E966.root',
+# Make sure the LHE generator uses a different seed!
+process.RandomNumberGeneratorService.generator.initialSeed = options.seed
+process.RandomNumberGeneratorService.externalLHEProducer.initialSeed = options.seed
 
-    ),
-    inputCommands = cms.untracked.vstring('keep *', 
-        'drop LHEXMLStringProduct_*_*_*'),
-    secondaryFileNames = cms.untracked.vstring()
-)
+# Input source -> running directly on LHEs
+# process.source = cms.Source("PoolSource",
+#     dropDescendantsOfDroppedBranches = cms.untracked.bool(False),
+#     fileNames = cms.untracked.vstring(
+#         '/store/mc/RunIIWinter15wmLHE/TT_13TeV-powheg/LHE/MCRUN2_71_V1_ext1-v1/40000/FEAE2677-EFD9-E411-B1C4-02163E00E966.root',
+#     ),
+#     inputCommands = cms.untracked.vstring('keep *',
+#         'drop LHEXMLStringProduct_*_*_*'),
+#     secondaryFileNames = cms.untracked.vstring()
+# )
 
 process.options = cms.untracked.PSet(
  wantSummary = cms.untracked.bool(True)
 )
 
+process.source = cms.Source("EmptySource")
+
 # Production Info
 process.configurationMetadata = cms.untracked.PSet(
-    annotation = cms.untracked.string('Configuration/GenProduction/python/TOP-RunIIWinter15GS-00001-fragment.py nevts:1'),
+    annotation = cms.untracked.string('Configuration/GenProduction/python/TOP-RunIISummer19UL16wmLHEGEN-00004-fragment.py nevts:1'),
     name = cms.untracked.string('Applications'),
     version = cms.untracked.string('$Revision: 1.19 $')
 )
 
-#pythia 8 config
+# Output definition
+
+process.externalLHEProducer = cms.EDProducer("ExternalLHEProducer",
+    args = cms.vstring('/cvmfs/cms.cern.ch/phys_generator/gridpacks/2017/13TeV/powheg/V2/TT_hvq/TT_hdamp_NNPDF31_NNLO_dilepton.tgz'),
+    nEvents = cms.untracked.uint32(options.maxEvents),
+    numberOfParameters = cms.uint32(1),
+    outputFile = cms.string('cmsgrid_final.lhe'),
+    scriptName = cms.FileInPath('GeneratorInterface/LHEInterface/data/run_generic_tarball_cvmfs.sh')
+)
+
 from Configuration.Generator.Pythia8CommonSettings_cfi import *
-from Configuration.Generator.Pythia8CUEP8M1Settings_cfi import *
 from Configuration.Generator.Pythia8PowhegEmissionVetoSettings_cfi import *
+from Configuration.Generator.MCTunes2017.PythiaCP5Settings_cfi import *
+from Configuration.Generator.Pythia8CUEP8M2T4Settings_cfi import *
+from Configuration.Generator.Pythia8CUEP8M1Settings_cfi import *
+
+tune = options.tune.lower()
+if tune == "cp5":
+    tuneSettingsBlock = pythia8CP5SettingsBlock
+    tuneSettings = 'pythia8CP5Settings'
+elif tune == "cuep8m2t4":
+    tuneSettingsBlock = pythia8CUEP8M2T4SettingsBlock
+    tuneSettings = 'pythia8CUEP8M2T4Settings'
+elif tune == "cuep8m1":
+    tuneSettingsBlock = pythia8CUEP8M1SettingsBlock
+    tuneSettings = 'pythia8CUEP8M1Settings'
+
 process.generator = cms.EDFilter("Pythia8HadronizerFilter",
-                                 maxEventsToPrint = cms.untracked.int32(0),
-                                 pythiaPylistVerbosity = cms.untracked.int32(0),
-                                 filterEfficiency = cms.untracked.double(1.0),
-                                 pythiaHepMCVerbosity = cms.untracked.bool(False),
-                                 comEnergy = cms.double(13000.),
-                                 PythiaParameters = cms.PSet( pythia8CommonSettingsBlock,
-                                                              pythia8CUEP8M1SettingsBlock,
-                                                              pythia8PowhegEmissionVetoSettingsBlock,
-                                                              processParameters = cms.vstring( 'POWHEG:nFinal = 2',
-                                                                                               'TimeShower:mMaxGamma = 1.0',
-                                                                                               'TimeShower:renormMultFac   = 1',
-                                                                                               'TimeShower:factorMultFac   = 1',
-                                                                                               'TimeShower:MEcorrections   = on'											      
-                                                                                               ),
-                                                              parameterSets = cms.vstring('pythia8CommonSettings',
-                                                                                          'pythia8CUEP8M1Settings',
-                                                                                          'pythia8PowhegEmissionVetoSettings',
-                                                                                          'processParameters'
-                                                                                          )
-                                                              )
-                                 )
+                                maxEventsToPrint = cms.untracked.int32(0),
+                                pythiaPylistVerbosity = cms.untracked.int32(0),
+                                filterEfficiency = cms.untracked.double(1.0),
+                                pythiaHepMCVerbosity = cms.untracked.bool(False),
+                                comEnergy = cms.double(13000.),
+                                PythiaParameters = cms.PSet(
+                                                            pythia8CommonSettingsBlock,
+                                                            tuneSettingsBlock,
+                                                            pythia8PowhegEmissionVetoSettingsBlock,
+                                                            processParameters = cms.vstring(
+                                                                    'POWHEG:nFinal = 2', ## Number of final state particles
+                                                                    ## (BEFORE THE DECAYS) in the LHE
+                                                                    ## other than emitted extra parton
+                                                                    'TimeShower:mMaxGamma = 1.0',#cutting off lepton-pair production
+                                                                    ##in the electromagnetic shower
+                                                                    ##to not overlap with ttZ/gamma* samples
+                                                                    '6:m0 = 172.5',    # top mass'
+                                                                    ),
+                                                            parameterSets = cms.vstring('pythia8CommonSettings',
+                                                                                        tuneSettings,
+                                                                                        'pythia8PowhegEmissionVetoSettings',
+                                                                                        'processParameters'
+                                                            )
+                                )
+)
 
 if options.frag=='P':
 	process.generator.PythiaParameters.processParameters.append('StringZ:usePetersonB = on')     
@@ -113,28 +142,41 @@ if options.frag=='BL':
 #pseudo-top config
 from GeneratorInterface.RivetInterface.genParticles2HepMC_cfi import genParticles2HepMC
 process.genParticles2HepMC = genParticles2HepMC.clone( genParticles = cms.InputTag("genParticles") )
+# NOTE: the particleLevel producer applies some cuts on the jets (pt>30, |eta|<2.4)
 process.load("GeneratorInterface.RivetInterface.particleLevel_cfi")
+# include neutrinos in particle-level jets
 process.particleLevel.excludeNeutrinosFromJetClustering = False
 
 #analysis config
 process.TFileService = cms.Service("TFileService",
                                    fileName = cms.string(options.outputFile)
                                    )
-process.load('TopQuarkAnalysis.BFragmentationAnalyzer.bfragAnalysis_cfi')
 
+from TopQuarkAnalysis.BFragmentationAnalyzer.bfragAnalysis_cfi import bfragAnalysis
+if options.debug.lower() == "true":
+    process.load("TopQuarkAnalysis.BFragmentationAnalyzer.bfragWgtProducer_cfi")
+    process.bfragAnalysis = bfragAnalysis.clone(debug=cms.untracked.bool(True))
+else:
+    process.bfragAnalysis = bfragAnalysis
 
 # Path and EndPath definitions
 process.ProductionFilterSequence = cms.Sequence(process.generator)
+process.lhe_step = cms.Path(process.externalLHEProducer)
 process.generation_step = cms.Path(process.pgen)
-process.AnalysisSequence = cms.Path(process.genParticles2HepMC*process.particleLevel*process.bfragAnalysis)
+
+if options.debug.lower() == "true":
+    # debug: also run the weights producer
+    process.AnalysisSequence = cms.Path(process.genParticles2HepMC*process.particleLevel*process.bfragWgtProducer*process.bfragAnalysis)
+else:
+    process.AnalysisSequence = cms.Path(process.genParticles2HepMC*process.particleLevel*process.bfragAnalysis)
+
 process.genfiltersummary_step = cms.EndPath(process.genFilterSummary)
 process.endjob_step = cms.EndPath(process.endOfProcess)
 
 # Schedule definition
-process.schedule = cms.Schedule(process.generation_step,process.AnalysisSequence,process.genfiltersummary_step,process.endjob_step)
+process.schedule = cms.Schedule(process.lhe_step,process.generation_step,process.AnalysisSequence,process.genfiltersummary_step,process.endjob_step)
 
 # filter all path with the production filter sequence
 for path in process.paths:
-	getattr(process,path)._seq = process.ProductionFilterSequence * getattr(process,path)._seq 
-
-
+    if path in ['lhe_step']: continue
+    getattr(process,path)._seq = process.ProductionFilterSequence * getattr(process,path)._seq 

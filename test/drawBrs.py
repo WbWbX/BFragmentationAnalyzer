@@ -2,7 +2,7 @@
 
 import ROOT
 
-from buildWeightFile import BRs
+from buildBRweights import BRs
 
 def getPythia8Envelope():
     ROOT.gROOT.SetBatch(True)
@@ -26,7 +26,7 @@ def getPythia8Envelope():
 
     gr_pdg=ROOT.TGraphErrors()
     gr_pdg.SetName('pdg')
-    gr_pdg.SetTitle('PDG 2016')
+    gr_pdg.SetTitle('PDG 2020')
     gr_pdg.SetMarkerStyle(20)
     gr_py8=ROOT.TGraphErrors()
     gr_py8.SetName('py8')
@@ -56,7 +56,7 @@ def getPythia8Envelope():
         gr_pdg.SetPoint(i,pdg,i+0.3)
         gr_pdg.SetPointError(i,pdgUnc,0.)
 
-        txt.DrawLatex(0.13,i+0.5,pname)
+        txt.DrawLatex(0.135,i+0.5,pname)
 
     gr_py8env.Draw('e2')
     gr_pdg.Draw('p')
@@ -73,6 +73,7 @@ def getPythia8Envelope():
     
     c.Modified()
     c.Update()
+    c.SaveAs('${CMSSW_BASE}/src/TopQuarkAnalysis/BFragmentationAnalyzer/data/semilepbr_unc.pdf')
     c.SaveAs('${CMSSW_BASE}/src/TopQuarkAnalysis/BFragmentationAnalyzer/data/semilepbr_unc.png')
     
 
